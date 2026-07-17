@@ -1,0 +1,21 @@
+{
+  "name": "ies-hv4nta-matricula-simulador",
+  "version": "1.0.0",
+  "description": "Simulador interactivo en tiempo real para pruebas de carga y rendimiento de matrícula online (SIMULADOR PCRW)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "performance-testing",
+    "simulador",
+    "load-test",
+    "devops",
+    "k6",
+    "education"
+  ],
+  "author": "SIMULADOR PCRW",
+  "license": "MIT",
+  "dependencies": {}
+}

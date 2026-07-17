@@ -1,372 +1,538 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>APM Admin Panel - IES HV4NTA</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>APM Admin Panel - SIMULADOR PCRW</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
-        body { font-family: 'Outfit', sans-serif; }
+      @import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap");
+      body {
+        font-family: "Outfit", sans-serif;
+      }
+      /* Barra de desplazamiento personalizada */
+      ::-webkit-scrollbar {
+        width: 10px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #0f172a;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: linear-gradient(to bottom, #7dd3fc, #38bdf8);
+        border-radius: 10px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #0ea5e9;
+      }
     </style>
-</head>
-<body class="bg-slate-950 text-slate-100 min-h-screen">
+  </head>
+  <body class="bg-slate-950 text-slate-100 min-h-screen">
     <div class="container mx-auto px-4 py-5">
-        <!-- Top Header -->
-        <header class="flex flex-col lg:flex-row justify-between items-center border-b border-slate-800 pb-4 mb-6">
-            <div>
-                <span class="text-[10px] bg-rose-500/10 text-rose-400 px-2 py-0.5 rounded-full font-bold uppercase border border-rose-500/20 inline-block mb-1">Panel de Control Docente</span>
-                <h1 class="text-3xl font-black bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-500 bg-clip-text text-transparent">
-                    APM Admin Control Panel
-                </h1>
-                <p class="text-slate-400 text-xs mt-0.5">Acceso exclusivo para el administrador. Controla el estrés e inyecta carga en vivo.</p>
-            </div>
-            
-            <div class="mt-4 lg:mt-0 flex gap-3">
-                <a href="/" class="bg-slate-900 border border-slate-800 hover:border-slate-700 px-4 py-2 rounded-xl text-xs font-bold transition flex items-center">
-                    Inicio
-                </a>
-                <a href="/dashboard" class="bg-slate-900 border border-slate-800 hover:border-slate-700 px-4 py-2 rounded-xl text-xs font-bold transition flex items-center">
-                    Vista Pública (Dashboard)
-                </a>
-                <a href="/matricula" class="bg-slate-900 border border-slate-800 hover:border-slate-700 px-4 py-2 rounded-xl text-xs font-bold transition flex items-center">
-                    Matrícula LAN
-                </a>
-            </div>
-        </header>
-
-        <!-- Main Layout -->
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            <!-- Left Side: APM Monitor Metrics -->
-            <div class="lg:col-span-3 space-y-6">
-                <!-- Stats Widgets -->
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <!-- Concurrencia -->
-                    <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
-                        <p class="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Concurrencia Total</p>
-                        <p id="activeReqVal" class="text-3xl font-black text-blue-400 mt-2">0</p>
-                        <p class="text-[9px] text-slate-400 mt-2">
-                            <span id="realVUsVal" class="text-yellow-400 font-bold">0</span> reales / 
-                            <span id="simVUsVal" class="text-sky-400 font-bold">0</span> simulados
-                        </p>
-                    </div>
-
-                    <!-- Latencia Media -->
-                    <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
-                        <p class="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Latencia Media</p>
-                        <p id="avgLatencyVal" class="text-3xl font-black text-indigo-400 mt-2">0 ms</p>
-                        <span id="avgLatencySub" class="text-[9px] block mt-2 font-semibold">Cargando...</span>
-                    </div>
-
-                    <!-- Throughput -->
-                    <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
-                        <p class="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Rendimiento (RPS)</p>
-                        <p id="rpsVal" class="text-3xl font-black text-emerald-400 mt-2">0.0</p>
-                        <p id="totalReqVal" class="text-[9px] text-slate-400 mt-2">Total: 0</p>
-                    </div>
-
-                    <!-- Tasa de Error -->
-                    <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
-                        <p class="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Tasa de Error</p>
-                        <p id="errorRateVal" class="text-3xl font-black text-rose-500 mt-2">0.0 %</p>
-                        <p id="statusRate" class="text-[9px] text-rose-400 mt-2">Errores: 0</p>
-                    </div>
-                </div>
-
-                <!-- Live Chart -->
-                <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
-                    <h3 class="text-xs font-bold text-slate-200 mb-3 uppercase tracking-wider">Historial Latencia vs Concurrencia</h3>
-                    <div class="h-80">
-                        <canvas id="liveChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- Event Log -->
-                <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
-                    <h3 class="text-xs font-bold text-slate-200 mb-3 uppercase tracking-wider">Consola de Eventos del Servidor</h3>
-                    <div id="eventLogContainer" class="h-44 overflow-y-auto space-y-1.5 text-xs font-mono bg-slate-950 p-4 rounded-xl border border-slate-800">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Right Side: Administration Controls -->
-            <div class="space-y-6">
-                <!-- Server Mode Control -->
-                <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-4">
-                    <h3 class="text-xs font-bold text-slate-200 uppercase tracking-wider border-b border-slate-800 pb-2">Estado Arquitectura</h3>
-                    
-                    <div class="flex justify-between items-center bg-slate-950 p-3 rounded-xl border border-slate-850">
-                        <span class="text-xs font-semibold text-slate-400">OPTIMIZACIÓN:</span>
-                        <button id="toggleBtn" onclick="toggleMode()" class="px-4 py-1.5 rounded-lg font-bold text-xs uppercase transition-all duration-300">
-                            Cargando...
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Live Load Generator (0 to 1000) -->
-                <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-4">
-                    <h3 class="text-xs font-bold text-slate-200 uppercase tracking-wider border-b border-slate-800 pb-2 font-semibold">Generador de Estrés</h3>
-                    
-                    <div>
-                        <div class="flex justify-between text-xs mb-1">
-                            <span class="text-slate-400">VUs de Fondo:</span>
-                            <span id="sliderVal" class="text-sky-400 font-bold">0 VUs</span>
-                        </div>
-                        <input id="vuSlider" type="range" min="0" max="1000" step="10" value="0" oninput="setSliderVUs(this.value)" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500">
-                        <div class="flex justify-between text-[9px] text-slate-500 mt-1">
-                            <span>0</span>
-                            <span>250</span>
-                            <span>500</span>
-                            <span>750</span>
-                            <span>1000 VUs</span>
-                        </div>
-                    </div>
-
-                    <!-- Presets -->
-                    <div class="space-y-2 pt-2">
-                        <span class="text-[10px] text-slate-400 font-bold block uppercase tracking-wider">Presets de Presentación:</span>
-                        
-                        <button onclick="applyPreset('tránsito_bajo')" class="w-full text-left bg-slate-800 hover:bg-slate-700/80 text-xs px-3 py-2 rounded-lg font-semibold flex justify-between items-center transition border border-slate-700/40">
-                            <span>🟢 Tránsito Bajo</span>
-                            <span class="text-[9px] text-emerald-400 font-bold">Optimizado + 10 VUs</span>
-                        </button>
-                        
-                        <button onclick="applyPreset('pico_lento')" class="w-full text-left bg-slate-800 hover:bg-slate-700/80 text-xs px-3 py-2 rounded-lg font-semibold flex justify-between items-center transition border border-slate-700/40">
-                            <span>🔴 Pico Lento (Colapso)</span>
-                            <span class="text-[9px] text-rose-400 font-bold">Sin Opt. + 150 VUs</span>
-                        </button>
-
-                        <button onclick="applyPreset('pico_optimizado')" class="w-full text-left bg-slate-800 hover:bg-slate-700/80 text-xs px-3 py-2 rounded-lg font-semibold flex justify-between items-center transition border border-slate-700/40">
-                            <span>⚡ Pico Optimizado</span>
-                            <span class="text-[9px] text-indigo-400 font-bold">Optimizado + 500 VUs</span>
-                        </button>
-
-                        <button onclick="applyPreset('estrés_extremo')" class="w-full text-left bg-slate-850 hover:bg-slate-805 text-xs px-3 py-2 rounded-lg font-semibold flex justify-between items-center transition border border-slate-700/60">
-                            <span>🔥 Estrés Extremo</span>
-                            <span class="text-[9px] text-purple-400 font-bold">Optimizado + 1000 VUs</span>
-                        </button>
-                    </div>
-
-                    <!-- Reset Stats -->
-                    <div class="pt-2">
-                        <button onclick="resetStatsServer()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-100 font-semibold py-2.5 rounded-xl text-xs transition border border-slate-700">
-                            Reiniciar Métricas
-                        </button>
-                    </div>
-                </div>
-            </div>
+      <!-- Top Header -->
+      <header
+        class="flex flex-col lg:flex-row justify-between items-center border-b border-slate-800 pb-4 mb-6"
+      >
+        <div>
+          <span
+            class="text-[10px] bg-rose-500/10 text-rose-400 px-2 py-0.5 rounded-full font-bold uppercase border border-rose-500/20 inline-block mb-1"
+            >Panel de Control Docente</span
+          >
+          <h1
+            class="text-3xl font-black bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-500 bg-clip-text text-transparent"
+          >
+            APM Admin Control Panel
+          </h1>
+          <p class="text-slate-400 text-xs mt-0.5">
+            Acceso exclusivo para el administrador. Controla el estrés e inyecta
+            carga en vivo.
+          </p>
         </div>
+
+        <div class="mt-4 lg:mt-0 flex gap-3">
+          <a
+            href="/"
+            class="bg-slate-900 border border-slate-800 hover:border-slate-700 px-4 py-2 rounded-xl text-xs font-bold transition flex items-center"
+          >
+            Inicio
+          </a>
+          <a
+            href="/dashboard"
+            class="bg-slate-900 border border-slate-800 hover:border-slate-700 px-4 py-2 rounded-xl text-xs font-bold transition flex items-center"
+          >
+            Vista Pública (Dashboard)
+          </a>
+          <a
+            href="/matricula"
+            class="bg-slate-900 border border-slate-800 hover:border-slate-700 px-4 py-2 rounded-xl text-xs font-bold transition flex items-center"
+          >
+            Matrícula LAN
+          </a>
+        </div>
+      </header>
+
+      <!-- Main Layout -->
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <!-- Left Side: APM Monitor Metrics -->
+        <div class="lg:col-span-3 space-y-6">
+          <!-- Stats Widgets -->
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <!-- Concurrencia -->
+            <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+              <p
+                class="text-[10px] text-slate-400 uppercase tracking-wider font-bold"
+              >
+                Concurrencia Total
+              </p>
+              <p
+                id="activeReqVal"
+                class="text-3xl font-black text-blue-400 mt-2"
+              >
+                0
+              </p>
+              <p class="text-[9px] text-slate-400 mt-2">
+                <span id="realVUsVal" class="text-yellow-400 font-bold">0</span>
+                reales /
+                <span id="simVUsVal" class="text-sky-400 font-bold">0</span>
+                simulados
+              </p>
+            </div>
+
+            <!-- Latencia Media -->
+            <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+              <p
+                class="text-[10px] text-slate-400 uppercase tracking-wider font-bold"
+              >
+                Latencia Media
+              </p>
+              <p
+                id="avgLatencyVal"
+                class="text-3xl font-black text-indigo-400 mt-2"
+              >
+                0 ms
+              </p>
+              <span
+                id="avgLatencySub"
+                class="text-[9px] block mt-2 font-semibold"
+                >Cargando...</span
+              >
+            </div>
+
+            <!-- Throughput -->
+            <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+              <p
+                class="text-[10px] text-slate-400 uppercase tracking-wider font-bold"
+              >
+                Rendimiento (RPS)
+              </p>
+              <p id="rpsVal" class="text-3xl font-black text-emerald-400 mt-2">
+                0.0
+              </p>
+              <p id="totalReqVal" class="text-[9px] text-slate-400 mt-2">
+                Total: 0
+              </p>
+            </div>
+
+            <!-- Tasa de Error -->
+            <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+              <p
+                class="text-[10px] text-slate-400 uppercase tracking-wider font-bold"
+              >
+                Tasa de Error
+              </p>
+              <p
+                id="errorRateVal"
+                class="text-3xl font-black text-rose-500 mt-2"
+              >
+                0.0 %
+              </p>
+              <p id="statusRate" class="text-[9px] text-rose-400 mt-2">
+                Errores: 0
+              </p>
+            </div>
+          </div>
+
+          <!-- Live Chart -->
+          <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+            <h3
+              class="text-xs font-bold text-slate-200 mb-3 uppercase tracking-wider"
+            >
+              Historial Latencia vs Concurrencia
+            </h3>
+            <div class="h-80">
+              <canvas id="liveChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Event Log -->
+          <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+            <h3
+              class="text-xs font-bold text-slate-200 mb-3 uppercase tracking-wider"
+            >
+              Consola de Eventos del Servidor
+            </h3>
+            <div
+              id="eventLogContainer"
+              class="h-44 overflow-y-auto space-y-1.5 text-xs font-mono bg-slate-950 p-4 rounded-xl border border-slate-800"
+            ></div>
+          </div>
+        </div>
+
+        <!-- Right Side: Administration Controls -->
+        <div class="space-y-6">
+          <!-- Server Mode Control -->
+          <div
+            class="bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-4"
+          >
+            <h3
+              class="text-xs font-bold text-slate-200 uppercase tracking-wider border-b border-slate-800 pb-2"
+            >
+              Estado Arquitectura
+            </h3>
+
+            <div
+              class="flex justify-between items-center bg-slate-950 p-3 rounded-xl border border-slate-850"
+            >
+              <span class="text-xs font-semibold text-slate-400"
+                >OPTIMIZACIÓN:</span
+              >
+              <button
+                id="toggleBtn"
+                onclick="toggleMode()"
+                class="px-4 py-1.5 rounded-lg font-bold text-xs uppercase transition-all duration-300"
+              >
+                Cargando...
+              </button>
+            </div>
+          </div>
+
+          <!-- Live Load Generator (0 to 1000) -->
+          <div
+            class="bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-4"
+          >
+            <h3
+              class="text-xs font-bold text-slate-200 uppercase tracking-wider border-b border-slate-800 pb-2 font-semibold"
+            >
+              Generador de Estrés
+            </h3>
+
+            <div>
+              <div class="flex justify-between text-xs mb-1">
+                <span class="text-slate-400">VUs de Fondo:</span>
+                <span id="sliderVal" class="text-sky-400 font-bold">0 VUs</span>
+              </div>
+              <input
+                id="vuSlider"
+                type="range"
+                min="0"
+                max="1000"
+                step="10"
+                value="0"
+                oninput="setSliderVUs(this.value)"
+                class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
+              />
+              <div class="flex justify-between text-[9px] text-slate-500 mt-1">
+                <span>0</span>
+                <span>250</span>
+                <span>500</span>
+                <span>750</span>
+                <span>1000 VUs</span>
+              </div>
+            </div>
+
+            <!-- Presets -->
+            <div class="space-y-2 pt-2">
+              <span
+                class="text-[10px] text-slate-400 font-bold block uppercase tracking-wider"
+                >Presets de Presentación:</span
+              >
+
+              <button
+                onclick="applyPreset('tránsito_bajo')"
+                class="w-full text-left bg-slate-800 hover:bg-slate-700/80 text-xs px-3 py-2 rounded-lg font-semibold flex justify-between items-center transition border border-slate-700/40"
+              >
+                <span>🟢 Tránsito Bajo</span>
+                <span class="text-[9px] text-emerald-400 font-bold"
+                  >Optimizado + 10 VUs</span
+                >
+              </button>
+
+              <button
+                onclick="applyPreset('pico_lento')"
+                class="w-full text-left bg-slate-800 hover:bg-slate-700/80 text-xs px-3 py-2 rounded-lg font-semibold flex justify-between items-center transition border border-slate-700/40"
+              >
+                <span>🔴 Pico Lento (Colapso)</span>
+                <span class="text-[9px] text-rose-400 font-bold"
+                  >Sin Opt. + 150 VUs</span
+                >
+              </button>
+
+              <button
+                onclick="applyPreset('pico_optimizado')"
+                class="w-full text-left bg-slate-800 hover:bg-slate-700/80 text-xs px-3 py-2 rounded-lg font-semibold flex justify-between items-center transition border border-slate-700/40"
+              >
+                <span>⚡ Pico Optimizado</span>
+                <span class="text-[9px] text-indigo-400 font-bold"
+                  >Optimizado + 500 VUs</span
+                >
+              </button>
+
+              <button
+                onclick="applyPreset('estrés_extremo')"
+                class="w-full text-left bg-slate-850 hover:bg-slate-805 text-xs px-3 py-2 rounded-lg font-semibold flex justify-between items-center transition border border-slate-700/60"
+              >
+                <span>🔥 Estrés Extremo</span>
+                <span class="text-[9px] text-purple-400 font-bold"
+                  >Optimizado + 1000 VUs</span
+                >
+              </button>
+            </div>
+
+            <!-- Reset Stats -->
+            <div class="pt-2">
+              <button
+                onclick="resetStatsServer()"
+                class="w-full bg-slate-800 hover:bg-slate-700 text-slate-100 font-semibold py-2.5 rounded-xl text-xs transition border border-slate-700"
+              >
+                Reiniciar Métricas
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <script>
-        // Init chart
-        const ctx = document.getElementById('liveChart').getContext('2d');
-        const liveChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: [],
-                datasets: [
-                    {
-                        label: 'Latencia (ms)',
-                        data: [],
-                        borderColor: '#818cf8',
-                        backgroundColor: 'rgba(129, 140, 248, 0.03)',
-                        borderWidth: 2,
-                        tension: 0.25,
-                        yAxisID: 'y1'
-                    },
-                    {
-                        label: 'Usuarios Concurrencia (VUs)',
-                        data: [],
-                        borderColor: '#38bdf8',
-                        backgroundColor: 'transparent',
-                        borderWidth: 1.5,
-                        tension: 0.1,
-                        yAxisID: 'y2'
-                    }
-                ]
+      // Init chart
+      const ctx = document.getElementById("liveChart").getContext("2d");
+      const liveChart = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: [],
+          datasets: [
+            {
+              label: "Latencia (ms)",
+              data: [],
+              borderColor: "#818cf8",
+              backgroundColor: "rgba(129, 140, 248, 0.03)",
+              borderWidth: 2,
+              tension: 0.25,
+              yAxisID: "y1",
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: {
-                        grid: { display: false },
-                        ticks: { color: '#64748b', font: { size: 9 } }
-                    },
-                    y1: {
-                        position: 'left',
-                        grid: { color: 'rgba(71, 85, 105, 0.15)' },
-                        ticks: { color: '#818cf8', font: { size: 9 } },
-                        title: { display: true, text: 'Latencia (ms)', color: '#818cf8', font: { size: 9 } }
-                    },
-                    y2: {
-                        position: 'right',
-                        grid: { display: false },
-                        ticks: { color: '#38bdf8', font: { size: 9 } },
-                        title: { display: true, text: 'Usuarios Activos', color: '#38bdf8', font: { size: 9 } }
-                    }
-                },
-                plugins: {
-                    legend: { labels: { color: '#cbd5e1', font: { size: 10 } } }
-                }
+            {
+              label: "Usuarios Concurrencia (VUs)",
+              data: [],
+              borderColor: "#38bdf8",
+              backgroundColor: "transparent",
+              borderWidth: 1.5,
+              tension: 0.1,
+              yAxisID: "y2",
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { color: "#64748b", font: { size: 9 } },
+            },
+            y1: {
+              position: "left",
+              grid: { color: "rgba(71, 85, 105, 0.15)" },
+              ticks: { color: "#818cf8", font: { size: 9 } },
+              title: {
+                display: true,
+                text: "Latencia (ms)",
+                color: "#818cf8",
+                font: { size: 9 },
+              },
+            },
+            y2: {
+              position: "right",
+              grid: { display: false },
+              ticks: { color: "#38bdf8", font: { size: 9 } },
+              title: {
+                display: true,
+                text: "Usuarios Activos",
+                color: "#38bdf8",
+                font: { size: 9 },
+              },
+            },
+          },
+          plugins: {
+            legend: { labels: { color: "#cbd5e1", font: { size: 10 } } },
+          },
+        },
+      });
+
+      let lastReqCount = 0;
+      let lastTime = Date.now();
+
+      async function fetchStats() {
+        try {
+          const res = await fetch("/api/control/stats");
+          const data = await res.json();
+
+          const now = Date.now();
+          const deltaReq = data.totalRequests - lastReqCount;
+          const deltaTimeSec = (now - lastTime) / 1000;
+          let currentRps = deltaReq / deltaTimeSec;
+          if (currentRps < 0) currentRps = 0;
+
+          lastReqCount = data.totalRequests;
+          lastTime = now;
+
+          document.getElementById("activeReqVal").innerText =
+            data.activeRequests;
+          document.getElementById("avgLatencyVal").innerText =
+            data.avgLatency.toFixed(0) + " ms";
+          document.getElementById("totalReqVal").innerText =
+            "Total: " + data.totalRequests;
+          document.getElementById("errorRateVal").innerText =
+            (data.errorRate * 100).toFixed(1) + " %";
+          document.getElementById("statusRate").innerText =
+            "Errores: " + data.failedRequests;
+          document.getElementById("rpsVal").innerText = currentRps.toFixed(1);
+
+          // Concurrency breakdown
+          document.getElementById("simVUsVal").innerText = data.simulatedVUs;
+          document.getElementById("realVUsVal").innerText = data.realUsersCount;
+
+          // Update Slider value text if not matching
+          if (document.getElementById("vuSlider").value != data.simulatedVUs) {
+            document.getElementById("vuSlider").value = data.simulatedVUs;
+          }
+          document.getElementById("sliderVal").innerText =
+            data.simulatedVUs + " VUs";
+
+          // Toggle active mode button state
+          const toggleBtn = document.getElementById("toggleBtn");
+          if (data.mode === "optimized") {
+            toggleBtn.innerText = "OPTIMIZADO";
+            toggleBtn.className =
+              "px-4 py-1.5 rounded-lg font-bold text-xs uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
+          } else {
+            toggleBtn.innerText = "SIN OPTIMIZAR";
+            toggleBtn.className =
+              "px-4 py-1.5 rounded-lg font-bold text-xs uppercase bg-rose-500/20 text-rose-400 border border-rose-500/30 animate-pulse";
+          }
+
+          if (data.mode === "optimized") {
+            document.getElementById("avgLatencySub").innerText =
+              "Redis Cache HIT";
+            document.getElementById("avgLatencySub").className =
+              "text-[9px] text-emerald-400 mt-2 font-semibold";
+          } else {
+            document.getElementById("avgLatencySub").innerText =
+              "Table Scan en MySQL";
+            document.getElementById("avgLatencySub").className =
+              "text-[9px] text-rose-400 mt-2 font-semibold animate-pulse";
+          }
+
+          // Update charts
+          const timeLabel = new Date().toLocaleTimeString().substring(3, 8);
+          liveChart.data.labels.push(timeLabel);
+          liveChart.data.datasets[0].data.push(data.avgLatency);
+          liveChart.data.datasets[1].data.push(data.activeRequests);
+
+          if (liveChart.data.labels.length > 30) {
+            liveChart.data.labels.shift();
+            liveChart.data.datasets[0].data.shift();
+            liveChart.data.datasets[1].data.shift();
+          }
+          liveChart.update("none");
+
+          // Update event log
+          const logContainer = document.getElementById("eventLogContainer");
+          logContainer.innerHTML = "";
+          data.eventLog.forEach((log) => {
+            let colorClass = "text-slate-400";
+            let prefix = "[Sim]";
+            if (log.type === "real_success") {
+              colorClass =
+                "text-yellow-300 font-bold bg-yellow-900/10 py-0.5 px-1 rounded border border-yellow-900/20";
+              prefix = "[REAL]";
+            } else if (log.type === "real_error") {
+              colorClass =
+                "text-rose-400 font-extrabold bg-rose-950/20 py-0.5 px-1 rounded border border-rose-900/30";
+              prefix = "[REAL ER]";
+            } else if (log.type === "sim_error") {
+              colorClass = "text-rose-500/60";
+              prefix = "[Sim ER]";
+            } else if (log.type === "system") {
+              colorClass = "text-sky-400 font-bold";
+              prefix = "[SYS]";
             }
+
+            const div = document.createElement("div");
+            div.className = colorClass;
+            div.innerText = log.time + " " + prefix + " " + log.message;
+            logContainer.appendChild(div);
+          });
+        } catch (err) {
+          console.error("Error fetching stats:", err);
+        }
+      }
+
+      async function toggleMode() {
+        await fetch("/api/control/toggle", { method: "POST" });
+        fetchStats();
+      }
+
+      async function setSliderVUs(val) {
+        document.getElementById("sliderVal").innerText = val + " VUs";
+        await fetch("/api/control/set-vus", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ vus: parseInt(val) }),
+        });
+      }
+
+      async function applyPreset(presetName) {
+        let mode = "optimized";
+        let vus = 0;
+        if (presetName === "tránsito_bajo") {
+          mode = "optimized";
+          vus = 10;
+        } else if (presetName === "pico_lento") {
+          mode = "unoptimized";
+          vus = 150;
+        } else if (presetName === "pico_optimizado") {
+          mode = "optimized";
+          vus = 500;
+        } else if (presetName === "estrés_extremo") {
+          mode = "optimized";
+          vus = 1000;
+        }
+
+        await fetch("/api/control/set-vus", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ vus: vus }),
         });
 
-        let lastReqCount = 0;
-        let lastTime = Date.now();
-
-        async function fetchStats() {
-            try {
-                const res = await fetch('/api/control/stats');
-                const data = await res.json();
-                
-                const now = Date.now();
-                const deltaReq = data.totalRequests - lastReqCount;
-                const deltaTimeSec = (now - lastTime) / 1000;
-                let currentRps = deltaReq / deltaTimeSec;
-                if (currentRps < 0) currentRps = 0;
-                
-                lastReqCount = data.totalRequests;
-                lastTime = now;
-
-                document.getElementById('activeReqVal').innerText = data.activeRequests;
-                document.getElementById('avgLatencyVal').innerText = data.avgLatency.toFixed(0) + ' ms';
-                document.getElementById('totalReqVal').innerText = 'Total: ' + data.totalRequests;
-                document.getElementById('errorRateVal').innerText = (data.errorRate * 100).toFixed(1) + ' %';
-                document.getElementById('statusRate').innerText = 'Errores: ' + data.failedRequests;
-                document.getElementById('rpsVal').innerText = currentRps.toFixed(1);
-                
-                // Concurrency breakdown
-                document.getElementById('simVUsVal').innerText = data.simulatedVUs;
-                document.getElementById('realVUsVal').innerText = data.realUsersCount;
-                
-                // Update Slider value text if not matching
-                if (document.getElementById('vuSlider').value != data.simulatedVUs) {
-                    document.getElementById('vuSlider').value = data.simulatedVUs;
-                }
-                document.getElementById('sliderVal').innerText = data.simulatedVUs + ' VUs';
-
-                // Toggle active mode button state
-                const toggleBtn = document.getElementById('toggleBtn');
-                if (data.mode === 'optimized') {
-                    toggleBtn.innerText = 'OPTIMIZADO';
-                    toggleBtn.className = 'px-4 py-1.5 rounded-lg font-bold text-xs uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
-                } else {
-                    toggleBtn.innerText = 'SIN OPTIMIZAR';
-                    toggleBtn.className = 'px-4 py-1.5 rounded-lg font-bold text-xs uppercase bg-rose-500/20 text-rose-400 border border-rose-500/30 animate-pulse';
-                }
-                
-                if (data.mode === 'optimized') {
-                    document.getElementById('avgLatencySub').innerText = 'Redis Cache HIT';
-                    document.getElementById('avgLatencySub').className = 'text-[9px] text-emerald-400 mt-2 font-semibold';
-                } else {
-                    document.getElementById('avgLatencySub').innerText = 'Table Scan en MySQL';
-                    document.getElementById('avgLatencySub').className = 'text-[9px] text-rose-400 mt-2 font-semibold animate-pulse';
-                }
-
-                // Update charts
-                const timeLabel = new Date().toLocaleTimeString().substring(3, 8);
-                liveChart.data.labels.push(timeLabel);
-                liveChart.data.datasets[0].data.push(data.avgLatency);
-                liveChart.data.datasets[1].data.push(data.activeRequests);
-                
-                if (liveChart.data.labels.length > 30) {
-                    liveChart.data.labels.shift();
-                    liveChart.data.datasets[0].data.shift();
-                    liveChart.data.datasets[1].data.shift();
-                }
-                liveChart.update('none');
-
-                // Update event log
-                const logContainer = document.getElementById('eventLogContainer');
-                logContainer.innerHTML = '';
-                data.eventLog.forEach(log => {
-                    let colorClass = 'text-slate-400';
-                    let prefix = '[Sim]';
-                    if (log.type === 'real_success') {
-                        colorClass = 'text-yellow-300 font-bold bg-yellow-900/10 py-0.5 px-1 rounded border border-yellow-900/20';
-                        prefix = '[REAL]';
-                    } else if (log.type === 'real_error') {
-                        colorClass = 'text-rose-400 font-extrabold bg-rose-950/20 py-0.5 px-1 rounded border border-rose-900/30';
-                        prefix = '[REAL ER]';
-                    } else if (log.type === 'sim_error') {
-                        colorClass = 'text-rose-500/60';
-                        prefix = '[Sim ER]';
-                    } else if (log.type === 'system') {
-                        colorClass = 'text-sky-400 font-bold';
-                        prefix = '[SYS]';
-                    }
-                    
-                    const div = document.createElement('div');
-                    div.className = colorClass;
-                    div.innerText = log.time + ' ' + prefix + ' ' + log.message;
-                    logContainer.appendChild(div);
-                });
-                
-            } catch (err) {
-                console.error("Error fetching stats:", err);
-            }
+        const res = await fetch("/api/control/stats");
+        const data = await res.json();
+        if (data.mode !== mode) {
+          await fetch("/api/control/toggle", { method: "POST" });
         }
 
-        async function toggleMode() {
-            await fetch('/api/control/toggle', { method: 'POST' });
-            fetchStats();
-        }
-
-        async function setSliderVUs(val) {
-            document.getElementById('sliderVal').innerText = val + ' VUs';
-            await fetch('/api/control/set-vus', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ vus: parseInt(val) })
-            });
-        }
-
-        async function applyPreset(presetName) {
-            let mode = 'optimized';
-            let vus = 0;
-            if (presetName === 'tránsito_bajo') {
-                mode = 'optimized';
-                vus = 10;
-            } else if (presetName === 'pico_lento') {
-                mode = 'unoptimized';
-                vus = 150;
-            } else if (presetName === 'pico_optimizado') {
-                mode = 'optimized';
-                vus = 500;
-            } else if (presetName === 'estrés_extremo') {
-                mode = 'optimized';
-                vus = 1000;
-            }
-
-            await fetch('/api/control/set-vus', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ vus: vus })
-            });
-            
-            const res = await fetch('/api/control/stats');
-            const data = await res.json();
-            if (data.mode !== mode) {
-                await fetch('/api/control/toggle', { method: 'POST' });
-            }
-
-            fetchStats();
-        }
-
-        async function resetStatsServer() {
-            await fetch('/api/control/reset', { method: 'POST' });
-            liveChart.data.labels = [];
-            liveChart.data.datasets[0].data = [];
-            liveChart.data.datasets[1].data = [];
-            liveChart.update();
-            fetchStats();
-        }
-
-        setInterval(fetchStats, 1000);
         fetchStats();
+      }
+
+      async function resetStatsServer() {
+        await fetch("/api/control/reset", { method: "POST" });
+        liveChart.data.labels = [];
+        liveChart.data.datasets[0].data = [];
+        liveChart.data.datasets[1].data = [];
+        liveChart.update();
+        fetchStats();
+      }
+
+      setInterval(fetchStats, 1000);
+      fetchStats();
     </script>
-</body>
+  </body>
 </html>

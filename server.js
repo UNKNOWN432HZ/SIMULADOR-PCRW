@@ -10,6 +10,8 @@ let globalMode = 'unoptimized'; // 'unoptimized' or 'optimized'
 let simulatedVUs = 0;
 let eventLog = [];
 
+
+
 // Map to track active real users (validated by student ID)
 const activeRealUsers = new Map();
 
@@ -134,7 +136,9 @@ const QR_API_URL = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&dat
 // Helper to read and render HTML templates dynamically
 function getHtmlView(fileName) {
     try {
-        const filePath = path.join(__dirname, 'views', fileName);
+        const filePath = fileName === 'index.html'
+            ? path.join(__dirname, fileName)
+            : path.join(__dirname, 'views', fileName);
         let html = fs.readFileSync(filePath, 'utf8');
         
         // Interpolate server-side dynamic properties
@@ -466,7 +470,7 @@ function sendJson(res, statusCode, data) {
 // Start Server
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`==================================================================`);
-    console.log(`       SIMULADOR REAL DE MATRÍCULA INTERACTIVA: IES HV4NTA`);
+    console.log(`       SIMULADOR REAL DE MATRÍCULA INTERACTIVA: SIMULADOR PCRW`);
     console.log(`==================================================================`);
     console.log(` Servidor levantado en RED LOCAL:    http://${LAN_IP}:${PORT}`);
     console.log(`\n Pantallas de Presentación en Vivo:`);
