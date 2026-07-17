@@ -8,7 +8,7 @@ const testMode = args.includes('--optimized') ? 'optimized' : 'unoptimized';
 // Test Configuration
 const TARGET_PORT = 3000;
 const TARGET_HOST = 'localhost';
-const CONCURRENCY_VUS = testMode === 'optimized' ? 50 : 35; // 50 concurrent VUs for optimized, 35 for unoptimized (which is its breaking point)
+const CONCURRENCY_VUS = testMode === 'optimized' ? 50 : 35; // 50 concurrent VUs for optimized, 35 for unoptimized
 const DURATION_SECONDS = 15;
 const THINK_TIME_MS = 150; // 150ms think time to put high throughput
 
@@ -258,7 +258,7 @@ async function startLoadTest() {
         console.log(`   Se observa que el tiempo de respuesta promedio supera el límite de SLA`);
         console.log(`   (establecido en 1500ms) y la tasa de error es significativa debido al`);
         console.log(`   agotamiento del pool de procesos PHP-FPM y bloqueos en base de datos.`);
-        console.log(`\n👉 Para probar el modo optimizado, ejecuta: node load_tester.js --optimized\n`);
+        console.log(`\n👉 Para probar el modo optimizado, ejecuta: node scripts/load_tester.js --optimized\n`);
     } else {
         console.log(`✨ ANÁLISIS DE OPTIMIZACIÓN (MODO OPTIMIZADO CON REDIS):`);
         console.log(`   El tiempo de respuesta se mantiene por debajo de los 300ms de forma`);

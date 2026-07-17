@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intranet Académica - IES HV4NTA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
+        body { font-family: 'Outfit', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between">
+    <div class="absolute -top-40 -left-40 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
+    <div class="absolute -bottom-40 -right-40 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"></div>
+
+    <!-- Header Navigation -->
+    <header class="border-b border-slate-900 bg-slate-950/60 backdrop-blur py-4 px-6 sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <span class="text-lg font-black bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">IES HV4NTA</span>
+            <nav class="flex space-x-6 text-sm">
+                <a href="/matricula" class="hover:text-blue-400 font-semibold transition">Portal Matrícula</a>
+                <a href="/dashboard" class="hover:text-blue-400 font-semibold transition">APM Público</a>
+                <a href="/admin" class="text-rose-400/80 hover:text-rose-400 font-semibold transition">Consola Admin</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-16 flex-1 flex flex-col items-center justify-center text-center relative z-10">
+        <span class="bg-blue-500/10 text-blue-400 text-xs px-3.5 py-1 rounded-full font-bold uppercase tracking-wider border border-blue-500/20 mb-4 inline-block">Plataforma de Simulación Educativa</span>
+        <h1 class="text-4xl md:text-6xl font-black tracking-tight text-white mb-6 leading-tight max-w-3xl">
+            Simulador de Pruebas de Carga y <span class="bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-500 bg-clip-text text-transparent">Rendimiento Web</span>
+        </h1>
+        <p class="text-slate-400 md:text-lg mb-12 max-w-2xl leading-relaxed">
+            Plataforma interactiva del curso <span class="text-slate-200 font-semibold">Pruebas de Software</span>. Experimenta en vivo el comportamiento de un servidor web Laravel/Nginx bajo el colapso de consultas secuenciales y la optimización con Redis.
+        </p>
+
+        <!-- Big Buttons Grid (Symmetrical 3-column layout) -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full max-w-4xl">
+            <!-- Matricula portal -->
+            <a href="/matricula" class="group bg-slate-900/60 border border-slate-800/80 hover:border-blue-500/40 p-6 rounded-3xl text-left transition-all duration-300 transform hover:scale-[1.02] flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center space-x-3.5 mb-4">
+                        <div class="w-11 h-11 bg-blue-500/10 border border-blue-500/25 rounded-2xl flex items-center justify-center text-blue-400 font-bold group-hover:bg-blue-500/20 transition shrink-0">📝</div>
+                        <h3 class="text-lg font-bold text-white group-hover:text-blue-400 transition">Portal del Alumno</h3>
+                    </div>
+                    <p class="text-xs text-slate-400 leading-relaxed">Ficha de matrícula interactiva para alumnos de la clase. Ingresa y simula el envío de tu expediente de forma concurrente.</p>
+                </div>
+                <span class="text-blue-400 text-xs font-bold mt-6 inline-flex items-center group-hover:translate-x-1 transition-transform">Acceder al portal &rarr;</span>
+            </a>
+
+            <!-- APM Viewer -->
+            <a href="/dashboard" class="group bg-slate-900/60 border border-slate-800/80 hover:border-indigo-500/40 p-6 rounded-3xl text-left transition-all duration-300 transform hover:scale-[1.02] flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center space-x-3.5 mb-4">
+                        <div class="w-11 h-11 bg-indigo-500/10 border border-indigo-500/25 rounded-2xl flex items-center justify-center text-indigo-400 font-bold group-hover:bg-indigo-500/20 transition shrink-0">📊</div>
+                        <h3 class="text-lg font-bold text-white group-hover:text-indigo-400 transition">Dashboard Público (APM)</h3>
+                    </div>
+                    <p class="text-xs text-slate-400 leading-relaxed">Pantalla de solo lectura para los estudiantes. Observa los gráficos de latencia global y la concurrencia en tiempo real.</p>
+                </div>
+                <span class="text-indigo-400 text-xs font-bold mt-6 inline-flex items-center group-hover:translate-x-1 transition-transform">Ver métricas en vivo &rarr;</span>
+            </a>
+
+            <!-- QR Code Card (Clickable to expand - Symmetrical layout) -->
+            <div onclick="openQrModal()" class="group bg-slate-900/60 border border-slate-800/80 hover:border-purple-500/40 p-6 rounded-3xl text-left transition-all duration-300 transform hover:scale-[1.02] flex flex-col justify-between cursor-pointer">
+                <div>
+                    <div class="flex items-center space-x-3.5 mb-4">
+                        <div class="w-11 h-11 bg-purple-500/10 border border-purple-500/25 rounded-2xl flex items-center justify-center text-purple-400 font-bold group-hover:bg-purple-500/20 transition shrink-0">📱</div>
+                        <h3 class="text-lg font-bold text-white group-hover:text-purple-400 transition">Escanea para Entrar</h3>
+                    </div>
+                    <p class="text-xs text-slate-400 leading-normal mb-4">
+                        Conéctate a la red LAN por cable o Wi-Fi y escanea este código para simular tu matrícula en tiempo real:
+                    </p>
+                    <div class="flex justify-center my-3">
+                        <div class="bg-white p-2 rounded-xl inline-block shadow-lg shadow-indigo-500/5">
+                            <img src="${QR_API_URL}" alt="QR LAN Access" class="w-28 h-28">
+                        </div>
+                    </div>
+                </div>
+                <span class="text-indigo-400 font-bold block mt-4 font-mono text-[10px] group-hover:underline text-center w-full">${LAN_MATRICULA_URL}</span>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal for Large QR -->
+    <div id="qrModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center z-50 p-4" onclick="closeQrModal(event)">
+        <div class="bg-slate-900 border border-slate-800 p-8 rounded-3xl max-w-md w-full text-center relative shadow-2xl" onclick="event.stopPropagation()">
+            <!-- Close Button -->
+            <button onclick="document.getElementById('qrModal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-white transition font-bold text-xl">&times;</button>
+            
+            <span class="bg-purple-500/10 text-purple-400 text-[10px] px-3 py-1 rounded-full font-bold uppercase tracking-wider border border-purple-500/20 inline-block mb-3">Escaneo de Larga Distancia</span>
+            <h3 class="text-xl font-black text-white mb-1">Código QR Gigante</h3>
+            <p class="text-xs text-slate-400 mb-5">Perfecto para escanear desde los asientos traseros del aula</p>
+            
+            <!-- Giant QR Code -->
+            <div class="bg-white p-3 rounded-2xl inline-block shadow-xl mb-5">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(LAN_MATRICULA_URL)}" alt="QR LAN Access Large" class="w-72 h-72">
+            </div>
+            
+            <!-- Large URL details -->
+            <div class="bg-slate-950 p-4 rounded-xl border border-slate-850">
+                <span class="text-[9px] uppercase font-bold text-slate-500 block tracking-wider mb-1">Enlace del Portal de Matrícula</span>
+                <a href="${LAN_MATRICULA_URL}" target="_blank" class="text-base font-mono font-bold text-indigo-400 hover:underline block break-all">${LAN_MATRICULA_URL}</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-900 py-6 text-center text-xs text-slate-500">
+        <p>Ámbito: Pruebas de Software | Docente: ING. ALEGRIA CORE, CRISTHIAN | IES HV4NTA - 2026</p>
+    </footer>
+
+    <script>
+        function openQrModal() {
+            document.getElementById('qrModal').classList.remove('hidden');
+        }
+        function closeQrModal(event) {
+            document.getElementById('qrModal').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>

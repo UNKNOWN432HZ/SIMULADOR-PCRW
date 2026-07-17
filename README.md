@@ -15,16 +15,16 @@ El sistema está desarrollado en **Node.js** con cero dependencias externas, hac
    - **Simulación Optimizada (Redis + Índices)**: Emula la indexación del motor SQL (búsqueda en árbol balanceado $O(\log N)$) y el almacenamiento en caché en memoria con Redis (Cache Hit). Las peticiones se despachan de forma instantánea en menos de 30ms.
    - **Generador Interno de Carga (VUs)**: Un motor interno que genera usuarios virtuales en segundo plano ajustables mediante un slider en tiempo real (admite **de 0 a 1000 usuarios concurrentes**).
    - **Validación Real de Concurrencia**: Rastrea usuarios reales únicos en el servidor mediante un mapeo de hilos activos y DNI de estudiantes, filtrando las peticiones de bots simulados.
-   - **Múltiples Portales Integrados**:
-     - **Página de Inicio (`/`)**: Página institucional de bienvenida con botones de navegación.
-     - **Portal de Alumnos (`/matricula`)**: Interfaz móvil optimizada para que los alumnos reales envíen fichas de matrícula y observen en vivo el estado del servidor (APM cliente) y reintenten transacciones de forma directa en caso de error.
-     - **Dashboard Público (`/dashboard`)**: Monitor APM de solo lectura (sin controles) para que los alumnos vigilen los gráficos generales de rendimiento desde sus propios dispositivos.
-     - **Consola de Administración (`/admin`)**: Consola del docente para alternar optimizaciones, inyectar cargas concurrentes de fondo (hasta 1000 VUs) y aplicar presets.
+    - **Múltiples Portales Integrados**:
+      - **Página de Inicio (`/`)**: Carga el archivo `views/index.html` de bienvenida con botones de navegación.
+      - **Portal de Alumnos (`/matricula`)**: Interfaz móvil optimizada para que los alumnos reales envíen fichas de matrícula y observen en vivo el estado del servidor (APM cliente) y reintenten transacciones de forma directa en caso de error.
+      - **Dashboard Público (`/dashboard`)**: Monitor APM de solo lectura (sin controles) para que los alumnos vigilen los gráficos generales de rendimiento desde sus propios dispositivos.
+      - **Consola de Administración (`/admin`)**: Consola del docente para alternar optimizaciones, inyectar cargas concurrentes de fondo (hasta 1000 VUs) y aplicar presets.
 
-2. **Inyector de Tráfico Externo (`load_tester.js`)**:
+2. **Inyector de Tráfico Externo (`scripts/load_tester.js`)**:
    - Inyector de concurrencia pura en Node.js que simula usuarios concurrentes haciendo peticiones en bucle y genera reportes detallados con percentiles (p50, p90, p95, p99), Throughput (RPS) y desglose de códigos de error.
 
-3. **Script de Pruebas de Carga de Referencia (`k6_script.js`)**:
+3. **Script de Pruebas de Carga de Referencia (`scripts/k6_script.js`)**:
    - Script oficial en formato JavaScript compatible con **Grafana k6** para ejecuciones profesionales basadas en SLAs y thresholds.
 
 ---
@@ -112,20 +112,20 @@ Para llevar la simulación a cabo en medio de una exposición de clase ante el d
 
 Si deseas realizar mediciones estadísticas formales desde la consola para tu reporte escrito o demostración individual, puedes abrir una **segunda terminal** en el directorio del proyecto y utilizar los inyectores adjuntos:
 
-### Inyector Incorporado (`load_tester.js`)
+### Inyector Incorporado (`scripts/load_tester.js`)
 * **Para probar el sistema sin optimizar**:
   ```bash
-  node load_tester.js
+  node scripts/load_tester.js
   ```
 * **Para probar el sistema optimizado**:
   ```bash
-  node load_tester.js --optimized
+  node scripts/load_tester.js --optimized
   ```
 
-### Inyector Profesional Grafana k6 (`k6_script.js`)
+### Inyector Profesional Grafana k6 (`scripts/k6_script.js`)
 Si tienes instalado k6 en tu equipo de desarrollo, puedes correr la simulación oficial mediante:
 ```bash
-k6 run k6_script.js
+k6 run scripts/k6_script.js
 ```
 
 ---
