@@ -1,0 +1,31 @@
+# Environment files
+.env
+.env/
+.env.local
+.env.*.local
+.env.development
+.env.test
+.env.production
+
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# Python Virtual Environments
+.venv/
+venv/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+
+# Logs and databases
+logs/
+*.log
+npm-debug.log*
+sqlite.db
+*.localdb
+
+# OS Files
+.DS_Store
+Thumbs.db
