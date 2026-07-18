@@ -298,6 +298,47 @@
               </button>
             </div>
           </div>
+
+          <!-- Hardware Profile Card -->
+          <div
+            class="bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-3.5 text-xs"
+          >
+            <h3
+              class="text-xs font-bold text-slate-200 uppercase tracking-wider border-b border-slate-800 pb-2 flex items-center gap-1.5"
+            >
+              🖥️ Recursos de Hardware Simulados
+            </h3>
+            <div class="space-y-2.5">
+              <div class="flex justify-between border-b border-slate-800/40 pb-1">
+                <span class="text-slate-400">Servidor (VPS):</span>
+                <span class="text-slate-200 font-semibold font-mono">1 vCPU / 2GB RAM</span>
+              </div>
+              <div class="flex justify-between border-b border-slate-800/40 pb-1">
+                <span class="text-slate-400">Sistema Operativo:</span>
+                <span class="text-slate-200 font-semibold">Ubuntu 22.04 LTS</span>
+              </div>
+              <div class="flex justify-between border-b border-slate-800/40 pb-1">
+                <span class="text-slate-400">Servidor Web:</span>
+                <span class="text-slate-200 font-semibold font-mono">Nginx 1.22</span>
+              </div>
+              <div class="flex justify-between border-b border-slate-800/40 pb-1">
+                <span class="text-slate-400">Backend Engine:</span>
+                <span class="text-slate-200 font-semibold font-mono">PHP-FPM 8.1</span>
+              </div>
+              <div class="flex justify-between border-b border-slate-800/40 pb-1">
+                <span class="text-slate-400">Base de Datos:</span>
+                <span class="text-slate-200 font-semibold font-mono">MySQL 8.0</span>
+              </div>
+              <div class="flex justify-between border-b border-slate-800/40 pb-1">
+                <span class="text-slate-400">Capa de Memoria:</span>
+                <span class="text-slate-200 font-semibold font-mono">Redis Cache 7.0</span>
+              </div>
+              <div class="flex justify-between pt-1">
+                <span class="text-slate-400 font-semibold">Límite Hilos (FPM):</span>
+                <span id="optFpmStatusAdmin" class="font-extrabold text-rose-500 font-mono">pm.max_children = 20</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -424,11 +465,19 @@
               "Redis Cache HIT";
             document.getElementById("avgLatencySub").className =
               "text-[9px] text-emerald-400 mt-2 font-semibold";
+            document.getElementById("optFpmStatusAdmin").innerText =
+              "pm.max_children = 60";
+            document.getElementById("optFpmStatusAdmin").className =
+              "font-bold text-emerald-400 font-mono";
           } else {
             document.getElementById("avgLatencySub").innerText =
               "Table Scan en MySQL";
             document.getElementById("avgLatencySub").className =
               "text-[9px] text-rose-400 mt-2 font-semibold animate-pulse";
+            document.getElementById("optFpmStatusAdmin").innerText =
+              "pm.max_children = 20";
+            document.getElementById("optFpmStatusAdmin").className =
+              "font-bold text-rose-500 font-mono animate-pulse";
           }
 
           // Update charts

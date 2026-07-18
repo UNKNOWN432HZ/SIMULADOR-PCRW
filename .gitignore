@@ -29,3 +29,6 @@ sqlite.db
 # OS Files
 .DS_Store
 Thumbs.db
+
+#docx
+*.docx
