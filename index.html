@@ -273,24 +273,43 @@
               ? `http://localhost:${defaultPort}`
               : `http://${window.location.hostname}:${defaultPort}`;
 
-          const lanMatriculaUrl = `${backendHost}/matricula`;
-          const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(lanMatriculaUrl)}`;
-          const qrLargeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(lanMatriculaUrl)}`;
+          // Try to fetch true LAN IP and QR details from backend server
+          fetch(`${backendHost}/api/control/stats`)
+            .then(res => res.json())
+            .then(data => {
+              if (data.lanMatriculaUrl && data.qrApiUrl) {
+                console.log("[Live Server Mode] Sincronizadas URLs LAN reales del servidor:", data.lanMatriculaUrl);
+                updateQrDetails(data.lanMatriculaUrl, data.qrApiUrl);
+              } else {
+                useFallbackUrls();
+              }
+            })
+            .catch(err => {
+              console.warn("[Live Server Mode] Error al conectar con el backend para recuperar IP LAN. Usando fallback localhost.", err);
+              useFallbackUrls();
+            });
 
-          // Update elements individually
-          const qrPreviewImg = document.getElementById("qrPreviewImg");
-          if (qrPreviewImg) qrPreviewImg.src = qrApiUrl;
+          function useFallbackUrls() {
+            const lanMatriculaUrl = `${backendHost}/matricula`;
+            const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(lanMatriculaUrl)}`;
+            updateQrDetails(lanMatriculaUrl, qrApiUrl);
+          }
 
-          const qrPreviewUrlText = document.getElementById("qrPreviewUrlText");
-          if (qrPreviewUrlText) qrPreviewUrlText.innerText = lanMatriculaUrl;
+          function updateQrDetails(lanMatriculaUrl, qrApiUrl) {
+            const qrPreviewImg = document.getElementById("qrPreviewImg");
+            if (qrPreviewImg) qrPreviewImg.src = qrApiUrl;
 
-          const qrLargeImg = document.getElementById("qrLargeImg");
-          if (qrLargeImg) qrLargeImg.src = qrLargeUrl;
+            const qrPreviewUrlText = document.getElementById("qrPreviewUrlText");
+            if (qrPreviewUrlText) qrPreviewUrlText.innerText = lanMatriculaUrl;
 
-          const qrLargeUrlLink = document.getElementById("qrLargeUrlLink");
-          if (qrLargeUrlLink) {
-            qrLargeUrlLink.href = lanMatriculaUrl;
-            qrLargeUrlLink.innerText = lanMatriculaUrl;
+            const qrLargeImg = document.getElementById("qrLargeImg");
+            if (qrLargeImg) qrLargeImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(lanMatriculaUrl)}`;
+
+            const qrLargeUrlLink = document.getElementById("qrLargeUrlLink");
+            if (qrLargeUrlLink) {
+              qrLargeUrlLink.href = lanMatriculaUrl;
+              qrLargeUrlLink.innerText = lanMatriculaUrl;
+            }
           }
 
           // Fix navigation links to point to the backend server (port 3000)

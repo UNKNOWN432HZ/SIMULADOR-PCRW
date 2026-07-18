@@ -332,7 +332,9 @@ const server = http.createServer((req, res) => {
             errorRate: errRate,
             simulatedVUs: simulatedVUs,
             realUsersCount: realCount,
-            eventLog: eventLog
+            eventLog: eventLog,
+            lanMatriculaUrl: LAN_MATRICULA_URL,
+            qrApiUrl: QR_API_URL
         });
         
         stats.totalRequests = Math.max(0, stats.totalRequests - 2);
