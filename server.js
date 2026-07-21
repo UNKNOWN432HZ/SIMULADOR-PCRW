@@ -130,8 +130,25 @@ function getLocalIp() {
 
 const LAN_IP = getLocalIp();
 const PORT = 3000;
+const LAN_ROOT_URL = `http://${LAN_IP}:${PORT}`;
 const LAN_MATRICULA_URL = `http://${LAN_IP}:${PORT}/matricula`;
-const QR_API_URL = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(LAN_MATRICULA_URL)}`;
+const QR_API_URL = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(LAN_ROOT_URL)}`;
+
+// Single Active Admin Session Lock
+let activeAdminSession = {
+    token: null,
+    ip: null,
+    lastHeartbeat: 0
+};
+
+function checkAdminSessionActive() {
+    if (!activeAdminSession.token) return false;
+    if (Date.now() - activeAdminSession.lastHeartbeat > 10000) {
+        activeAdminSession.token = null;
+        return false;
+    }
+    return true;
+}
 
 // Helper to read and render HTML templates dynamically
 function getHtmlView(fileName) {
@@ -143,7 +160,8 @@ function getHtmlView(fileName) {
         
         // Interpolate server-side dynamic properties
         html = html.replace(/\${QR_API_URL}/g, QR_API_URL);
-        html = html.replace(/\${LAN_MATRICULA_URL}/g, LAN_MATRICULA_URL);
+        html = html.replace(/\${LAN_ROOT_URL}/g, LAN_ROOT_URL);
+        html = html.replace(/\${LAN_MATRICULA_URL}/g, LAN_ROOT_URL);
         return html;
     } catch (err) {
         return `
@@ -197,7 +215,7 @@ function simulateInternalRequest(method, path) {
     if (path === '/api/matricula/cursos') {
         if (globalMode === 'unoptimized') {
             if (currentVUs > 45) {
-                delay = 300;
+                delay = Math.round(Math.min(10000, 2200 + Math.pow(currentVUs, 1.25) * 6 + Math.random() * 500));
                 isError = true;
                 statusCode = 504;
             } else {
@@ -209,7 +227,7 @@ function simulateInternalRequest(method, path) {
     } else if (path === '/api/matricula/guardar') {
         if (globalMode === 'unoptimized') {
             if (currentVUs > 45) {
-                delay = 300;
+                delay = Math.round(Math.min(12000, 2800 + currentVUs * 10 + Math.random() * 500));
                 isError = true;
                 statusCode = 500;
             } else {
@@ -257,6 +275,160 @@ const server = http.createServer((req, res) => {
         recordRealUserActivity(studentId, studentName);
     }
     
+    // --- NON-BUSINESS SYSTEM & MONITORING ROUTES (DO NOT COUNT IN APM LOAD METRICS) ---
+    if (path === '/' && req.method === 'GET') {
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        return res.end(getHtmlView('index.html'));
+    } 
+    
+    if (path === '/matricula' && req.method === 'GET') {
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        return res.end(getHtmlView('matricula.html'));
+    }
+
+    if (path === '/dashboard' && req.method === 'GET') {
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        return res.end(getHtmlView('dashboard.html'));
+    }
+
+    if (path === '/admin' && req.method === 'GET') {
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        return res.end(getHtmlView('admin.html'));
+    }
+
+    if (path === '/favicon.ico') {
+        res.writeHead(204);
+        return res.end();
+    }
+
+    if (path === '/api/admin/login' && req.method === 'POST') {
+        let body = '';
+        req.on('data', chunk => { body += chunk; });
+        return req.on('end', () => {
+            try {
+                const data = JSON.parse(body);
+                const pin = String(data.pin || '').trim();
+                
+                if (pin !== '2030') {
+                    return sendJson(res, 401, { success: false, message: 'PIN de acceso incorrecto.' });
+                }
+
+                const now = Date.now();
+                const isSessionBusy = activeAdminSession.token && (now - activeAdminSession.lastHeartbeat < 10000);
+                const reqToken = req.headers['x-admin-token'] || data.token;
+
+                if (isSessionBusy && activeAdminSession.token !== reqToken) {
+                    return sendJson(res, 403, { 
+                        success: false, 
+                        message: 'Ya existe una sesión de Administrador activa en otro dispositivo. Solo se permite 1 Administrador simultáneo.' 
+                    });
+                }
+
+                const newToken = 'admin_sess_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
+                activeAdminSession = {
+                    token: newToken,
+                    ip: req.socket.remoteAddress,
+                    lastHeartbeat: now
+                };
+                logEvent('system', 'Administrador inició sesión de control exclusiva.');
+                return sendJson(res, 200, { success: true, token: newToken });
+            } catch (e) {
+                return sendJson(res, 400, { success: false, message: 'Petición inválida.' });
+            }
+        });
+    }
+
+    if (path === '/api/admin/heartbeat' && req.method === 'POST') {
+        let body = '';
+        req.on('data', chunk => { body += chunk; });
+        return req.on('end', () => {
+            try {
+                const data = JSON.parse(body);
+                const token = data.token || req.headers['x-admin-token'];
+                if (activeAdminSession.token && activeAdminSession.token === token) {
+                    activeAdminSession.lastHeartbeat = Date.now();
+                    return sendJson(res, 200, { success: true });
+                }
+                return sendJson(res, 401, { success: false, message: 'Sesión inactiva o expirada.' });
+            } catch (e) {
+                return sendJson(res, 400, { success: false });
+            }
+        });
+    }
+
+    if (path === '/api/admin/logout' && req.method === 'POST') {
+        let body = '';
+        req.on('data', chunk => { body += chunk; });
+        return req.on('end', () => {
+            try {
+                const data = JSON.parse(body);
+                const token = data.token || req.headers['x-admin-token'];
+                if (activeAdminSession.token === token) {
+                    activeAdminSession = { token: null, ip: null, lastHeartbeat: 0 };
+                    logEvent('system', 'Administrador cerró la sesión de control.');
+                }
+                return sendJson(res, 200, { success: true });
+            } catch (e) {
+                return sendJson(res, 200, { success: true });
+            }
+        });
+    }
+
+    if (path === '/api/control/stats' && req.method === 'GET') {
+        const realCount = getActiveRealUsersCount();
+        const avg = stats.latencySamples.length > 0 
+            ? stats.latencySamples.reduce((a, b) => a + b, 0) / stats.latencySamples.length 
+            : 0;
+        const errRate = stats.totalRequests > 0 ? stats.failedRequests / stats.totalRequests : 0;
+        
+        return sendJson(res, 200, {
+            mode: globalMode,
+            totalRequests: stats.totalRequests,
+            successfulRequests: stats.successfulRequests,
+            failedRequests: stats.failedRequests,
+            activeRequests: stats.activeRequests,
+            avgLatency: avg,
+            errorRate: errRate,
+            simulatedVUs: simulatedVUs,
+            realUsersCount: realCount,
+            totalConcurrency: realCount + simulatedVUs,
+            hasActiveAdmin: checkAdminSessionActive(),
+            eventLog: eventLog,
+            lanRootUrl: LAN_ROOT_URL,
+            lanMatriculaUrl: LAN_ROOT_URL,
+            qrApiUrl: QR_API_URL
+        });
+    } 
+    
+    if (path === '/api/control/toggle' && req.method === 'POST') {
+        globalMode = globalMode === 'unoptimized' ? 'optimized' : 'unoptimized';
+        logEvent('system', `Modo del servidor cambiado a: ${globalMode.toUpperCase()}`);
+        return sendJson(res, 200, { mode: globalMode });
+    } 
+    
+    if (path === '/api/control/set-vus' && req.method === 'POST') {
+        let body = '';
+        req.on('data', chunk => { body += chunk; });
+        return req.on('end', () => {
+            try {
+                const data = JSON.parse(body);
+                const parsed = parseInt(data.vus);
+                simulatedVUs = isNaN(parsed) ? 0 : Math.min(1000, Math.max(0, parsed));
+                logEvent('system', `Background simulated VUs ajustados a: ${simulatedVUs}`);
+                return sendJson(res, 200, { simulatedVUs: simulatedVUs });
+            } catch(e) {
+                return sendJson(res, 400, { error: 'Invalid JSON' });
+            }
+        });
+    }
+
+    if (path === '/api/control/reset' && req.method === 'POST') {
+        resetStats();
+        logEvent('system', 'Métricas APM del servidor reiniciadas.');
+        return sendJson(res, 200, { reset: true });
+    }
+    
+    // --- BUSINESS MATRICULA API ENDPOINTS (TRACKED IN APM METRICS) ---
     stats.totalRequests++;
     stats.activeRequests++;
 
@@ -285,93 +457,9 @@ const server = http.createServer((req, res) => {
             }
         }
     }
-
-    // Router
-    if (path === '/' && req.method === 'GET') {
-        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-        res.end(getHtmlView('index.html'));
-        stats.totalRequests = Math.max(0, stats.totalRequests - 1);
-        stats.activeRequests = Math.max(0, stats.activeRequests - 1);
-    } 
-    
-    else if (path === '/matricula' && req.method === 'GET') {
-        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-        res.end(getHtmlView('matricula.html'));
-        stats.totalRequests = Math.max(0, stats.totalRequests - 1);
-        stats.activeRequests = Math.max(0, stats.activeRequests - 1);
-    }
-
-    else if (path === '/dashboard' && req.method === 'GET') {
-        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-        res.end(getHtmlView('dashboard.html'));
-        stats.totalRequests = Math.max(0, stats.totalRequests - 1);
-        stats.activeRequests = Math.max(0, stats.activeRequests - 1);
-    }
-
-    else if (path === '/admin' && req.method === 'GET') {
-        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-        res.end(getHtmlView('admin.html'));
-        stats.totalRequests = Math.max(0, stats.totalRequests - 1);
-        stats.activeRequests = Math.max(0, stats.activeRequests - 1);
-    }
-
-    else if (path === '/api/control/stats' && req.method === 'GET') {
-        const realCount = getActiveRealUsersCount();
-        const avg = stats.latencySamples.length > 0 
-            ? stats.latencySamples.reduce((a, b) => a + b, 0) / stats.latencySamples.length 
-            : 0;
-        const errRate = stats.totalRequests > 0 ? stats.failedRequests / stats.totalRequests : 0;
-        
-        sendJson(res, 200, {
-            mode: globalMode,
-            totalRequests: stats.totalRequests - 1,
-            successfulRequests: stats.successfulRequests,
-            failedRequests: stats.failedRequests,
-            activeRequests: stats.activeRequests - 1,
-            avgLatency: avg,
-            errorRate: errRate,
-            simulatedVUs: simulatedVUs,
-            realUsersCount: realCount,
-            eventLog: eventLog,
-            lanMatriculaUrl: LAN_MATRICULA_URL,
-            qrApiUrl: QR_API_URL
-        });
-        
-        stats.totalRequests = Math.max(0, stats.totalRequests - 2);
-        stats.activeRequests = Math.max(0, stats.activeRequests - 1);
-    } 
-    
-    else if (path === '/api/control/toggle' && req.method === 'POST') {
-        globalMode = globalMode === 'unoptimized' ? 'optimized' : 'unoptimized';
-        logEvent('system', `Modo del servidor cambiado a: ${globalMode.toUpperCase()}`);
-        sendJson(res, 200, { mode: globalMode });
-        
-        stats.totalRequests = Math.max(0, stats.totalRequests - 1);
-        stats.activeRequests = Math.max(0, stats.activeRequests - 1);
-    } 
-    
-    else if (path === '/api/control/set-vus' && req.method === 'POST') {
-        let body = '';
-        req.on('data', chunk => { body += chunk; });
-        req.on('end', () => {
-            try {
-                const data = JSON.parse(body);
-                simulatedVUs = Math.min(1000, Math.max(0, parseInt(data.vus) || 0));
-                logEvent('system', `Background simulated VUs ajustados a: ${simulatedVUs}`);
-                sendJson(res, 200, { simulatedVUs: simulatedVUs });
-            } catch(e) {
-                sendJson(res, 400, { error: 'Invalid JSON' });
-            }
-        });
-    }
-
-    else if (path === '/api/control/reset' && req.method === 'POST') {
-        resetStats();
-        sendJson(res, 200, { reset: true });
-    }
     
     // --- TARGET PORTAL ENDPOINTS ---
-    else if (path === '/api/auth/login' && req.method === 'POST') {
+    if (path === '/api/auth/login' && req.method === 'POST') {
         const delay = globalMode === 'unoptimized' ? 200 : 15;
         setTimeout(() => {
             finalizeRequest('success', 200);
@@ -387,11 +475,12 @@ const server = http.createServer((req, res) => {
         if (globalMode === 'unoptimized') {
             const currentVUs = stats.activeRequests;
             if (currentVUs > 45) {
+                const timeoutDelay = Math.round(Math.min(10000, 2200 + Math.pow(currentVUs, 1.25) * 6 + Math.random() * 500));
                 setTimeout(() => {
                     finalizeRequest('error', 504);
                     res.writeHead(504, { 'Content-Type': 'text/plain' });
                     res.end("504 Gateway Timeout: PHP-FPM pool queue exhausted.");
-                }, 300);
+                }, timeoutDelay);
             } else {
                 const baseDelay = 1500;
                 const congestionDelay = Math.pow(currentVUs, 1.8) * 15; 
@@ -426,11 +515,12 @@ const server = http.createServer((req, res) => {
         if (globalMode === 'unoptimized') {
             const currentVUs = stats.activeRequests;
             if (currentVUs > 45) {
+                const lockTimeoutDelay = Math.round(Math.min(12000, 2800 + currentVUs * 10 + Math.random() * 500));
                 setTimeout(() => {
                     finalizeRequest('error', 500);
                     res.writeHead(500, { 'Content-Type': 'text/plain' });
                     res.end("500 Internal Server Error: Connection abort by MySQL Lock Timeout.");
-                }, 300);
+                }, lockTimeoutDelay);
             } else {
                 const baseDelay = 1000;
                 const lockContention = currentVUs * 35;

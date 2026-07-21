@@ -256,9 +256,12 @@
               label: "Latencia (ms)",
               data: [],
               borderColor: "#818cf8",
-              backgroundColor: "rgba(129, 140, 248, 0.03)",
+              backgroundColor: "rgba(129, 140, 248, 0.05)",
               borderWidth: 2,
-              tension: 0.25,
+              tension: 0.3,
+              spanGaps: true,
+              pointRadius: 2,
+              pointHoverRadius: 4,
               yAxisID: "y1",
             },
             {
@@ -266,8 +269,11 @@
               data: [],
               borderColor: "#38bdf8",
               backgroundColor: "transparent",
-              borderWidth: 1.5,
+              borderWidth: 2,
               tension: 0.1,
+              spanGaps: true,
+              pointRadius: 2,
+              pointHoverRadius: 4,
               yAxisID: "y2",
             },
           ],
@@ -275,15 +281,29 @@
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          animation: false,
           scales: {
             x: {
               grid: { display: false },
-              ticks: { color: "#64748b", font: { size: 9 } },
+              ticks: {
+                color: "#64748b",
+                font: { size: 9 },
+                maxRotation: 0,
+                minRotation: 0,
+                autoSkip: true,
+                maxTicksLimit: 7,
+              },
             },
             y1: {
               position: "left",
+              beginAtZero: true,
+              suggestedMin: 0,
               grid: { color: "rgba(71, 85, 105, 0.15)" },
-              ticks: { color: "#818cf8", font: { size: 9 } },
+              ticks: {
+                color: "#818cf8",
+                font: { size: 9 },
+                callback: (val) => Math.round(val) + " ms",
+              },
               title: {
                 display: true,
                 text: "Latencia (ms)",
@@ -293,11 +313,19 @@
             },
             y2: {
               position: "right",
+              beginAtZero: true,
+              suggestedMin: 0,
+              suggestedMax: 10,
               grid: { display: false },
-              ticks: { color: "#38bdf8", font: { size: 9 } },
+              ticks: {
+                color: "#38bdf8",
+                font: { size: 9 },
+                precision: 0,
+                stepSize: 1,
+              },
               title: {
                 display: true,
-                text: "Usuarios Activos",
+                text: "Usuarios Concurrencia",
                 color: "#38bdf8",
                 font: { size: 9 },
               },
@@ -326,8 +354,11 @@
           lastReqCount = data.totalRequests;
           lastTime = now;
 
-          document.getElementById("activeReqVal").innerText =
-            data.activeRequests;
+          const totalConcurrency = (data.totalConcurrency !== undefined) 
+            ? data.totalConcurrency 
+            : (data.realUsersCount + data.simulatedVUs);
+
+          document.getElementById("activeReqVal").innerText = totalConcurrency;
           document.getElementById("avgLatencyVal").innerText =
             data.avgLatency.toFixed(0) + " ms";
           document.getElementById("totalReqVal").innerText =
@@ -378,13 +409,42 @@
               "font-bold text-rose-500";
           }
 
-          // Update charts
-          const timeLabel = new Date().toLocaleTimeString().substring(3, 8);
-          liveChart.data.labels.push(timeLabel);
-          liveChart.data.datasets[0].data.push(data.avgLatency);
-          liveChart.data.datasets[1].data.push(data.activeRequests);
+          // Dynamic Chart Y-Axis Scales (Adjust max and grouping steps dynamically)
+          const maxConc = Math.max(totalConcurrency, data.simulatedVUs || 0);
+          let y2Max = 10;
+          let y2Step = 2;
+          if (maxConc > 500) { y2Max = 1000; y2Step = 200; }
+          else if (maxConc > 200) { y2Max = 500; y2Step = 100; }
+          else if (maxConc > 50) { y2Max = 200; y2Step = 50; }
+          else if (maxConc > 10) { y2Max = 50; y2Step = 10; }
+          else { y2Max = 10; y2Step = 2; }
 
-          if (liveChart.data.labels.length > 30) {
+          liveChart.options.scales.y2.suggestedMax = y2Max;
+          liveChart.options.scales.y2.ticks.stepSize = y2Step;
+
+          const latVal = Math.max(0, Math.round(Number(data.avgLatency) || 0));
+          const concVal = Math.max(0, Math.round(Number(totalConcurrency) || 0));
+
+          let y1Max = 100;
+          if (latVal > 5000) { y1Max = 15000; }
+          else if (latVal > 1000) { y1Max = 5000; }
+          else if (latVal > 100) { y1Max = 1000; }
+          else { y1Max = 100; }
+          liveChart.options.scales.y1.suggestedMax = y1Max;
+
+          // Update charts
+          const d = new Date();
+          const timeLabel = [
+            String(d.getHours()).padStart(2, '0'),
+            String(d.getMinutes()).padStart(2, '0'),
+            String(d.getSeconds()).padStart(2, '0')
+          ].join(':');
+
+          liveChart.data.labels.push(timeLabel);
+          liveChart.data.datasets[0].data.push(latVal);
+          liveChart.data.datasets[1].data.push(concVal);
+
+          if (liveChart.data.labels.length > 25) {
             liveChart.data.labels.shift();
             liveChart.data.datasets[0].data.shift();
             liveChart.data.datasets[1].data.shift();

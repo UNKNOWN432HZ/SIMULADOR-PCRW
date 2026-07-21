@@ -18,6 +18,9 @@ env/
 ENV/
 __pycache__/
 *.py[cod]
+.lab/
+.vscode/
+.claude/
 
 # Logs and databases
 logs/

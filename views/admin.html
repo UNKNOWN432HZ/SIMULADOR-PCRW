@@ -28,6 +28,48 @@
     </style>
   </head>
   <body class="bg-slate-950 text-slate-100 min-h-screen">
+    <!-- Lock Screen Modal for Admin Protection -->
+    <div
+      id="adminLockModal"
+      class="fixed inset-0 bg-slate-950/95 backdrop-blur-xl flex items-center justify-center z-50 p-4 transition-all duration-300"
+    >
+      <div class="bg-slate-900 border border-slate-800 p-8 rounded-3xl max-w-md w-full text-center shadow-2xl relative">
+        <div class="w-14 h-14 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex items-center justify-center text-rose-400 text-2xl font-bold mx-auto mb-4">
+          🔒
+        </div>
+        <span class="text-[10px] bg-rose-500/10 text-rose-400 px-3 py-1 rounded-full font-bold uppercase tracking-wider border border-rose-500/20 inline-block mb-3">
+          Acceso Restringido
+        </span>
+        <h2 class="text-2xl font-black text-white mb-2">Consola de Administración</h2>
+        <p class="text-xs text-slate-400 mb-6 leading-relaxed">
+          Esta consola está protegida. Ingrese el código PIN de acceso:
+        </p>
+
+        <form onsubmit="submitAdminPin(event)" class="space-y-4">
+          <input
+            type="password"
+            id="adminPinInput"
+            placeholder="PIN de acceso"
+            class="w-full bg-slate-950 border border-slate-800 focus:border-rose-500 text-white text-center text-lg tracking-widest font-mono py-3 px-4 rounded-xl outline-none transition"
+            required
+            autofocus
+          />
+          <p id="pinErrorMsg" class="text-xs text-rose-400 font-semibold hidden">❌ PIN incorrecto. Acceso denegado.</p>
+
+          <button
+            type="submit"
+            class="w-full bg-rose-600 hover:bg-rose-500 text-white font-bold py-3 px-4 rounded-xl text-sm transition shadow-lg shadow-rose-600/20"
+          >
+            Desbloquear Consola
+          </button>
+        </form>
+
+        <div class="mt-6 pt-4 border-t border-slate-800 flex justify-center">
+          <a href="/" class="text-xs text-slate-400 hover:text-slate-200 font-semibold transition">← Volver al Inicio</a>
+        </div>
+      </div>
+    </div>
+
     <div class="container mx-auto px-4 py-5">
       <!-- Top Header -->
       <header
@@ -68,247 +110,242 @@
           >
             Matrícula LAN
           </a>
+          <button
+            onclick="lockAdminConsole()"
+            class="bg-rose-950/60 border border-rose-800/40 text-rose-400 hover:bg-rose-900/60 px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-lg shadow-rose-950/30"
+          >
+            🚪 Cerrar Sesión
+          </button>
         </div>
       </header>
 
       <!-- Main Layout -->
-      <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <!-- Left Side: APM Monitor Metrics -->
-        <div class="lg:col-span-3 space-y-6">
-          <!-- Stats Widgets -->
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <!-- Concurrencia -->
-            <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
-              <p
-                class="text-[10px] text-slate-400 uppercase tracking-wider font-bold"
-              >
-                Concurrencia Total
-              </p>
-              <p
-                id="activeReqVal"
-                class="text-3xl font-black text-blue-400 mt-2"
-              >
-                0
-              </p>
-              <p class="text-[9px] text-slate-400 mt-2">
-                <span id="realVUsVal" class="text-yellow-400 font-bold">0</span>
-                reales /
-                <span id="simVUsVal" class="text-sky-400 font-bold">0</span>
-                simulados
-              </p>
-            </div>
-
-            <!-- Latencia Media -->
-            <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
-              <p
-                class="text-[10px] text-slate-400 uppercase tracking-wider font-bold"
-              >
-                Latencia Media
-              </p>
-              <p
-                id="avgLatencyVal"
-                class="text-3xl font-black text-indigo-400 mt-2"
-              >
-                0 ms
-              </p>
-              <span
-                id="avgLatencySub"
-                class="text-[9px] block mt-2 font-semibold"
-                >Cargando...</span
-              >
-            </div>
-
-            <!-- Throughput -->
-            <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
-              <p
-                class="text-[10px] text-slate-400 uppercase tracking-wider font-bold"
-              >
-                Rendimiento (RPS)
-              </p>
-              <p id="rpsVal" class="text-3xl font-black text-emerald-400 mt-2">
-                0.0
-              </p>
-              <p id="totalReqVal" class="text-[9px] text-slate-400 mt-2">
-                Total: 0
-              </p>
-            </div>
-
-            <!-- Tasa de Error -->
-            <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
-              <p
-                class="text-[10px] text-slate-400 uppercase tracking-wider font-bold"
-              >
-                Tasa de Error
-              </p>
-              <p
-                id="errorRateVal"
-                class="text-3xl font-black text-rose-500 mt-2"
-              >
-                0.0 %
-              </p>
-              <p id="statusRate" class="text-[9px] text-rose-400 mt-2">
-                Errores: 0
-              </p>
-            </div>
+      <div class="space-y-6">
+        <!-- Stats Widgets -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <!-- Concurrencia -->
+          <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+            <p
+              class="text-[10px] text-slate-400 uppercase tracking-wider font-bold"
+            >
+              Concurrencia Total
+            </p>
+            <p
+              id="activeReqVal"
+              class="text-3xl font-black text-blue-400 mt-2"
+            >
+              0
+            </p>
+            <p class="text-[9px] text-slate-400 mt-2">
+              <span id="realVUsVal" class="text-yellow-400 font-bold">0</span>
+              reales /
+              <span id="simVUsVal" class="text-sky-400 font-bold">0</span>
+              simulados
+            </p>
           </div>
 
-          <!-- Live Chart -->
+          <!-- Latencia Media -->
           <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
-            <h3
-              class="text-xs font-bold text-slate-200 mb-3 uppercase tracking-wider"
+            <p
+              class="text-[10px] text-slate-400 uppercase tracking-wider font-bold"
             >
+              Latencia Media
+            </p>
+            <p
+              id="avgLatencyVal"
+              class="text-3xl font-black text-indigo-400 mt-2"
+            >
+              0 ms
+            </p>
+            <span
+              id="avgLatencySub"
+              class="text-[9px] block mt-2 font-semibold"
+              >Cargando...</span
+            >
+          </div>
+
+          <!-- Throughput -->
+          <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+            <p
+              class="text-[10px] text-slate-400 uppercase tracking-wider font-bold"
+            >
+              Rendimiento (RPS)
+            </p>
+            <p id="rpsVal" class="text-3xl font-black text-emerald-400 mt-2">
+              0.0
+            </p>
+            <p id="totalReqVal" class="text-[9px] text-slate-400 mt-2">
+              Total: 0
+            </p>
+          </div>
+
+          <!-- Tasa de Error -->
+          <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+            <p
+              class="text-[10px] text-slate-400 uppercase tracking-wider font-bold"
+            >
+              Tasa de Error
+            </p>
+            <p
+              id="errorRateVal"
+              class="text-3xl font-black text-rose-500 mt-2"
+            >
+              0.0 %
+            </p>
+            <p id="statusRate" class="text-[9px] text-rose-400 mt-2">
+              Errores: 0
+            </p>
+          </div>
+        </div>
+
+        <!-- Row 1: Live Chart (Left) vs Generador de Estrés & Arquitectura (Right) -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 items-stretch">
+          <!-- Left: Live Chart -->
+          <div class="lg:col-span-3 bg-slate-900 border border-slate-800 p-5 rounded-2xl flex flex-col justify-between h-full">
+            <h3 class="text-xs font-bold text-slate-200 mb-3 uppercase tracking-wider">
               Historial Latencia vs Concurrencia
             </h3>
-            <div class="h-80">
+            <div class="flex-1 min-h-[340px] relative w-full">
               <canvas id="liveChart"></canvas>
             </div>
           </div>
 
-          <!-- Event Log -->
-          <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
-            <h3
-              class="text-xs font-bold text-slate-200 mb-3 uppercase tracking-wider"
-            >
+          <!-- Right: Generador de Estrés & Arquitectura -->
+          <div class="lg:col-span-1 bg-slate-900 border border-slate-800 p-5 rounded-2xl flex flex-col justify-between h-full space-y-4">
+            <!-- Server Mode Control -->
+            <div>
+              <h3 class="text-xs font-bold text-slate-200 uppercase tracking-wider border-b border-slate-800 pb-2 mb-3">
+                Estado Arquitectura
+              </h3>
+              <div class="flex justify-between items-center bg-slate-950 p-3 rounded-xl border border-slate-850">
+                <span class="text-xs font-semibold text-slate-400">OPTIMIZACIÓN:</span>
+                <button
+                  id="toggleBtn"
+                  onclick="toggleMode()"
+                  class="px-4 py-1.5 rounded-lg font-bold text-xs uppercase transition-all duration-300"
+                >
+                  Cargando...
+                </button>
+              </div>
+            </div>
+
+            <!-- Stress Controls -->
+            <div class="space-y-3 flex-1 flex flex-col justify-between">
+              <h3 class="text-xs font-bold text-slate-200 uppercase tracking-wider border-b border-slate-800 pb-2 font-semibold">
+                Generador de Estrés
+              </h3>
+
+              <div>
+                <div class="flex justify-between items-center text-xs mb-2">
+                  <span class="text-slate-400">VUs de Fondo:</span>
+                  <div class="flex items-center gap-1.5">
+                    <input
+                      id="vuNumberInput"
+                      type="number"
+                      min="0"
+                      max="1000"
+                      step="5"
+                      value="0"
+                      onchange="setSliderVUs(this.value)"
+                      oninput="setSliderVUs(this.value)"
+                      class="w-16 bg-slate-950 border border-slate-800 focus:border-sky-500 text-sky-400 font-bold text-center text-xs py-1 px-1 rounded-lg outline-none transition font-mono"
+                    />
+                    <span id="sliderVal" class="text-sky-400 font-bold">VUs</span>
+                  </div>
+                </div>
+                <input
+                  id="vuSlider"
+                  type="range"
+                  min="0"
+                  max="1000"
+                  step="5"
+                  value="0"
+                  oninput="setSliderVUs(this.value)"
+                  onchange="setSliderVUs(this.value)"
+                  class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                />
+                <div class="flex justify-between text-[9px] text-slate-500 mt-1">
+                  <span>0</span>
+                  <span>250</span>
+                  <span>500</span>
+                  <span>750</span>
+                  <span>1000 VUs</span>
+                </div>
+              </div>
+
+              <!-- Detener Button -->
+              <button
+                onclick="setSliderVUs(0)"
+                class="w-full bg-rose-950/60 hover:bg-rose-900/60 border border-rose-800/60 text-rose-400 text-xs py-2 rounded-xl font-bold transition flex items-center justify-center gap-1.5 shadow-lg shadow-rose-950/30"
+              >
+                Detener
+              </button>
+
+              <!-- Presets -->
+              <div class="space-y-1.5 pt-1">
+                <span class="text-[10px] text-slate-400 font-bold block uppercase tracking-wider">Presets de Presentación:</span>
+                <button
+                  onclick="applyPreset('tránsito_bajo')"
+                  class="w-full text-left bg-slate-800 hover:bg-slate-700/80 text-xs px-3 py-1.5 rounded-lg font-semibold flex justify-between items-center transition border border-slate-700/40"
+                >
+                  <span>🟢 Tránsito Bajo</span>
+                  <span class="text-[9px] text-emerald-400 font-bold">Optimizado + 10 VUs</span>
+                </button>
+                <button
+                  onclick="applyPreset('pico_lento')"
+                  class="w-full text-left bg-slate-800 hover:bg-slate-700/80 text-xs px-3 py-1.5 rounded-lg font-semibold flex justify-between items-center transition border border-slate-700/40"
+                >
+                  <span>🔴 Pico Lento (Colapso)</span>
+                  <span class="text-[9px] text-rose-400 font-bold">Sin Opt. + 150 VUs</span>
+                </button>
+                <button
+                  onclick="applyPreset('pico_optimizado')"
+                  class="w-full text-left bg-slate-800 hover:bg-slate-700/80 text-xs px-3 py-1.5 rounded-lg font-semibold flex justify-between items-center transition border border-slate-700/40"
+                >
+                  <span>⚡ Pico Optimizado</span>
+                  <span class="text-[9px] text-indigo-400 font-bold">Optimizado + 500 VUs</span>
+                </button>
+                <button
+                  onclick="applyPreset('estrés_extremo')"
+                  class="w-full text-left bg-slate-850 hover:bg-slate-805 text-xs px-3 py-1.5 rounded-lg font-semibold flex justify-between items-center transition border border-slate-700/60"
+                >
+                  <span>🔥 Estrés Extremo</span>
+                  <span class="text-[9px] text-purple-400 font-bold">Optimizado + 1000 VUs</span>
+                </button>
+              </div>
+
+              <!-- Reset Stats -->
+              <div class="pt-1">
+                <button
+                  onclick="resetStatsServer()"
+                  class="w-full bg-slate-800 hover:bg-slate-700 text-slate-100 font-semibold py-2 rounded-xl text-xs transition border border-slate-700"
+                >
+                  Reiniciar Métricas
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 2: Event Log (Left) vs Hardware Profile (Right) -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 items-stretch">
+          <!-- Left: Consola de Eventos -->
+          <div class="lg:col-span-3 bg-slate-900 border border-slate-800 p-5 rounded-2xl flex flex-col justify-between h-full">
+            <h3 class="text-xs font-bold text-slate-200 mb-3 uppercase tracking-wider">
               Consola de Eventos del Servidor
             </h3>
             <div
               id="eventLogContainer"
-              class="h-44 overflow-y-auto space-y-1.5 text-xs font-mono bg-slate-950 p-4 rounded-xl border border-slate-800"
+              class="flex-1 min-h-[210px] max-h-[240px] overflow-y-auto space-y-1.5 text-xs font-mono bg-slate-950 p-4 rounded-xl border border-slate-800"
             ></div>
           </div>
-        </div>
 
-        <!-- Right Side: Administration Controls -->
-        <div class="space-y-6">
-          <!-- Server Mode Control -->
-          <div
-            class="bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-4"
-          >
-            <h3
-              class="text-xs font-bold text-slate-200 uppercase tracking-wider border-b border-slate-800 pb-2"
-            >
-              Estado Arquitectura
-            </h3>
-
-            <div
-              class="flex justify-between items-center bg-slate-950 p-3 rounded-xl border border-slate-850"
-            >
-              <span class="text-xs font-semibold text-slate-400"
-                >OPTIMIZACIÓN:</span
-              >
-              <button
-                id="toggleBtn"
-                onclick="toggleMode()"
-                class="px-4 py-1.5 rounded-lg font-bold text-xs uppercase transition-all duration-300"
-              >
-                Cargando...
-              </button>
-            </div>
-          </div>
-
-          <!-- Live Load Generator (0 to 1000) -->
-          <div
-            class="bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-4"
-          >
-            <h3
-              class="text-xs font-bold text-slate-200 uppercase tracking-wider border-b border-slate-800 pb-2 font-semibold"
-            >
-              Generador de Estrés
-            </h3>
-
-            <div>
-              <div class="flex justify-between text-xs mb-1">
-                <span class="text-slate-400">VUs de Fondo:</span>
-                <span id="sliderVal" class="text-sky-400 font-bold">0 VUs</span>
-              </div>
-              <input
-                id="vuSlider"
-                type="range"
-                min="0"
-                max="1000"
-                step="10"
-                value="0"
-                oninput="setSliderVUs(this.value)"
-                class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
-              />
-              <div class="flex justify-between text-[9px] text-slate-500 mt-1">
-                <span>0</span>
-                <span>250</span>
-                <span>500</span>
-                <span>750</span>
-                <span>1000 VUs</span>
-              </div>
-            </div>
-
-            <!-- Presets -->
-            <div class="space-y-2 pt-2">
-              <span
-                class="text-[10px] text-slate-400 font-bold block uppercase tracking-wider"
-                >Presets de Presentación:</span
-              >
-
-              <button
-                onclick="applyPreset('tránsito_bajo')"
-                class="w-full text-left bg-slate-800 hover:bg-slate-700/80 text-xs px-3 py-2 rounded-lg font-semibold flex justify-between items-center transition border border-slate-700/40"
-              >
-                <span>🟢 Tránsito Bajo</span>
-                <span class="text-[9px] text-emerald-400 font-bold"
-                  >Optimizado + 10 VUs</span
-                >
-              </button>
-
-              <button
-                onclick="applyPreset('pico_lento')"
-                class="w-full text-left bg-slate-800 hover:bg-slate-700/80 text-xs px-3 py-2 rounded-lg font-semibold flex justify-between items-center transition border border-slate-700/40"
-              >
-                <span>🔴 Pico Lento (Colapso)</span>
-                <span class="text-[9px] text-rose-400 font-bold"
-                  >Sin Opt. + 150 VUs</span
-                >
-              </button>
-
-              <button
-                onclick="applyPreset('pico_optimizado')"
-                class="w-full text-left bg-slate-800 hover:bg-slate-700/80 text-xs px-3 py-2 rounded-lg font-semibold flex justify-between items-center transition border border-slate-700/40"
-              >
-                <span>⚡ Pico Optimizado</span>
-                <span class="text-[9px] text-indigo-400 font-bold"
-                  >Optimizado + 500 VUs</span
-                >
-              </button>
-
-              <button
-                onclick="applyPreset('estrés_extremo')"
-                class="w-full text-left bg-slate-850 hover:bg-slate-805 text-xs px-3 py-2 rounded-lg font-semibold flex justify-between items-center transition border border-slate-700/60"
-              >
-                <span>🔥 Estrés Extremo</span>
-                <span class="text-[9px] text-purple-400 font-bold"
-                  >Optimizado + 1000 VUs</span
-                >
-              </button>
-            </div>
-
-            <!-- Reset Stats -->
-            <div class="pt-2">
-              <button
-                onclick="resetStatsServer()"
-                class="w-full bg-slate-800 hover:bg-slate-700 text-slate-100 font-semibold py-2.5 rounded-xl text-xs transition border border-slate-700"
-              >
-                Reiniciar Métricas
-              </button>
-            </div>
-          </div>
-
-          <!-- Hardware Profile Card -->
-          <div
-            class="bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-3.5 text-xs"
-          >
-            <h3
-              class="text-xs font-bold text-slate-200 uppercase tracking-wider border-b border-slate-800 pb-2 flex items-center gap-1.5"
-            >
+          <!-- Right: Hardware Profile -->
+          <div class="lg:col-span-1 bg-slate-900 border border-slate-800 p-5 rounded-2xl flex flex-col justify-between h-full space-y-3 text-xs">
+            <h3 class="text-xs font-bold text-slate-200 uppercase tracking-wider border-b border-slate-800 pb-2 flex items-center gap-1.5">
               🖥️ Recursos de Hardware Simulados
             </h3>
-            <div class="space-y-2.5">
+            <div class="space-y-2 flex-1 flex flex-col justify-around">
               <div class="flex justify-between border-b border-slate-800/40 pb-1">
                 <span class="text-slate-400">Servidor (VPS):</span>
                 <span class="text-slate-200 font-semibold font-mono">1 vCPU / 2GB RAM</span>
@@ -355,9 +392,12 @@
               label: "Latencia (ms)",
               data: [],
               borderColor: "#818cf8",
-              backgroundColor: "rgba(129, 140, 248, 0.03)",
+              backgroundColor: "rgba(129, 140, 248, 0.05)",
               borderWidth: 2,
-              tension: 0.25,
+              tension: 0.3,
+              spanGaps: true,
+              pointRadius: 2,
+              pointHoverRadius: 4,
               yAxisID: "y1",
             },
             {
@@ -365,8 +405,11 @@
               data: [],
               borderColor: "#38bdf8",
               backgroundColor: "transparent",
-              borderWidth: 1.5,
+              borderWidth: 2,
               tension: 0.1,
+              spanGaps: true,
+              pointRadius: 2,
+              pointHoverRadius: 4,
               yAxisID: "y2",
             },
           ],
@@ -374,15 +417,29 @@
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          animation: false,
           scales: {
             x: {
               grid: { display: false },
-              ticks: { color: "#64748b", font: { size: 9 } },
+              ticks: {
+                color: "#64748b",
+                font: { size: 9 },
+                maxRotation: 0,
+                minRotation: 0,
+                autoSkip: true,
+                maxTicksLimit: 7,
+              },
             },
             y1: {
               position: "left",
+              beginAtZero: true,
+              suggestedMin: 0,
               grid: { color: "rgba(71, 85, 105, 0.15)" },
-              ticks: { color: "#818cf8", font: { size: 9 } },
+              ticks: {
+                color: "#818cf8",
+                font: { size: 9 },
+                callback: (val) => Math.round(val) + " ms",
+              },
               title: {
                 display: true,
                 text: "Latencia (ms)",
@@ -392,11 +449,19 @@
             },
             y2: {
               position: "right",
+              beginAtZero: true,
+              suggestedMin: 0,
+              suggestedMax: 10,
               grid: { display: false },
-              ticks: { color: "#38bdf8", font: { size: 9 } },
+              ticks: {
+                color: "#38bdf8",
+                font: { size: 9 },
+                precision: 0,
+                stepSize: 1,
+              },
               title: {
                 display: true,
-                text: "Usuarios Activos",
+                text: "Usuarios Concurrencia",
                 color: "#38bdf8",
                 font: { size: 9 },
               },
@@ -425,8 +490,11 @@
           lastReqCount = data.totalRequests;
           lastTime = now;
 
-          document.getElementById("activeReqVal").innerText =
-            data.activeRequests;
+          const totalConcurrency = (data.totalConcurrency !== undefined) 
+            ? data.totalConcurrency 
+            : (data.realUsersCount + data.simulatedVUs);
+
+          document.getElementById("activeReqVal").innerText = totalConcurrency;
           document.getElementById("avgLatencyVal").innerText =
             data.avgLatency.toFixed(0) + " ms";
           document.getElementById("totalReqVal").innerText =
@@ -441,12 +509,20 @@
           document.getElementById("simVUsVal").innerText = data.simulatedVUs;
           document.getElementById("realVUsVal").innerText = data.realUsersCount;
 
-          // Update Slider value text if not matching
-          if (document.getElementById("vuSlider").value != data.simulatedVUs) {
-            document.getElementById("vuSlider").value = data.simulatedVUs;
+          // Update Slider & Number input value if not focused by user
+          const vuSlider = document.getElementById("vuSlider");
+          const vuNumInput = document.getElementById("vuNumberInput");
+          const sliderValLabel = document.getElementById("sliderVal");
+
+          if (vuSlider && document.activeElement !== vuSlider) {
+            vuSlider.value = data.simulatedVUs;
           }
-          document.getElementById("sliderVal").innerText =
-            data.simulatedVUs + " VUs";
+          if (vuNumInput && document.activeElement !== vuNumInput) {
+            vuNumInput.value = data.simulatedVUs;
+          }
+          if (sliderValLabel) {
+            sliderValLabel.innerText = data.simulatedVUs + " VUs";
+          }
 
           // Toggle active mode button state
           const toggleBtn = document.getElementById("toggleBtn");
@@ -480,92 +556,135 @@
               "font-bold text-rose-500 font-mono animate-pulse";
           }
 
-          // Update charts
-          const timeLabel = new Date().toLocaleTimeString().substring(3, 8);
-          liveChart.data.labels.push(timeLabel);
-          liveChart.data.datasets[0].data.push(data.avgLatency);
-          liveChart.data.datasets[1].data.push(data.activeRequests);
+          // Dynamic Chart Y-Axis Scales (Adjust max and grouping steps dynamically)
+          const maxConc = Math.max(totalConcurrency, data.simulatedVUs || 0);
+          let y2Max = 10;
+          let y2Step = 2;
+          if (maxConc > 500) { y2Max = 1000; y2Step = 200; }
+          else if (maxConc > 200) { y2Max = 500; y2Step = 100; }
+          else if (maxConc > 50) { y2Max = 200; y2Step = 50; }
+          else if (maxConc > 10) { y2Max = 50; y2Step = 10; }
+          else { y2Max = 10; y2Step = 2; }
 
-          if (liveChart.data.labels.length > 30) {
+          liveChart.options.scales.y2.suggestedMax = y2Max;
+          liveChart.options.scales.y2.ticks.stepSize = y2Step;
+
+          const latVal = Math.max(0, Math.round(Number(data.avgLatency) || 0));
+          const concVal = Math.max(0, Math.round(Number(totalConcurrency) || 0));
+
+          let y1Max = 100;
+          if (latVal > 5000) { y1Max = 15000; }
+          else if (latVal > 1000) { y1Max = 5000; }
+          else if (latVal > 100) { y1Max = 1000; }
+          else { y1Max = 100; }
+          liveChart.options.scales.y1.suggestedMax = y1Max;
+
+          // Update charts
+          const d = new Date();
+          const timeLabel = [
+            String(d.getHours()).padStart(2, '0'),
+            String(d.getMinutes()).padStart(2, '0'),
+            String(d.getSeconds()).padStart(2, '0')
+          ].join(':');
+
+          liveChart.data.labels.push(timeLabel);
+          liveChart.data.datasets[0].data.push(latVal);
+          liveChart.data.datasets[1].data.push(concVal);
+
+          if (liveChart.data.labels.length > 25) {
             liveChart.data.labels.shift();
             liveChart.data.datasets[0].data.shift();
             liveChart.data.datasets[1].data.shift();
           }
-          liveChart.update("none");
+          liveChart.update('none');
 
-          // Update event log
+          // Render event log
           const logContainer = document.getElementById("eventLogContainer");
-          logContainer.innerHTML = "";
-          data.eventLog.forEach((log) => {
-            let colorClass = "text-slate-400";
-            let prefix = "[Sim]";
-            if (log.type === "real_success") {
-              colorClass =
-                "text-yellow-300 font-bold bg-yellow-900/10 py-0.5 px-1 rounded border border-yellow-900/20";
-              prefix = "[REAL]";
-            } else if (log.type === "real_error") {
-              colorClass =
-                "text-rose-400 font-extrabold bg-rose-950/20 py-0.5 px-1 rounded border border-rose-900/30";
-              prefix = "[REAL ER]";
-            } else if (log.type === "sim_error") {
-              colorClass = "text-rose-500/60";
-              prefix = "[Sim ER]";
-            } else if (log.type === "system") {
-              colorClass = "text-sky-400 font-bold";
-              prefix = "[SYS]";
-            }
-
-            const div = document.createElement("div");
-            div.className = colorClass;
-            div.innerText = log.time + " " + prefix + " " + log.message;
-            logContainer.appendChild(div);
-          });
+          if (logContainer && data.eventLog) {
+            logContainer.innerHTML = data.eventLog
+              .map(
+                (log) => `
+              <div class="flex items-start gap-2 py-1.5 border-b border-slate-800/60 last:border-none text-[10px]">
+                <span class="text-slate-400 font-mono font-bold shrink-0">[${log.time}]</span>
+                <span class="${
+                  log.type === "real_success"
+                    ? "text-emerald-400 font-semibold"
+                    : log.type === "real_error"
+                      ? "text-rose-400 font-semibold animate-pulse"
+                      : log.type === "sim_error"
+                        ? "text-rose-400/80"
+                        : "text-slate-300"
+                }">${log.message}</span>
+              </div>
+            `,
+              )
+              .join("");
+          }
         } catch (err) {
-          console.error("Error fetching stats:", err);
+          console.error("Error al actualizar métricas APM:", err);
         }
       }
 
       async function toggleMode() {
-        await fetch("/api/control/toggle", { method: "POST" });
+        await fetch("/api/control/toggle", { 
+          method: "POST",
+          headers: { "x-admin-token": sessionStorage.getItem('pcrw_admin_token') || '' }
+        });
         fetchStats();
       }
 
       async function setSliderVUs(val) {
-        document.getElementById("sliderVal").innerText = val + " VUs";
+        const vus = Math.min(1000, Math.max(0, parseInt(val) || 0));
+        const slider = document.getElementById("vuSlider");
+        const numInput = document.getElementById("vuNumberInput");
+        const label = document.getElementById("sliderVal");
+
+        if (slider) slider.value = vus;
+        if (numInput) numInput.value = vus;
+        if (label) label.innerText = vus + " VUs";
+
         await fetch("/api/control/set-vus", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ vus: parseInt(val) }),
+          headers: { 
+            "Content-Type": "application/json",
+            "x-admin-token": sessionStorage.getItem('pcrw_admin_token') || '' 
+          },
+          body: JSON.stringify({ vus: vus }),
         });
+        fetchStats();
       }
+      const updateVUs = setSliderVUs;
 
       async function applyPreset(presetName) {
         let mode = "optimized";
         let vus = 0;
+
         if (presetName === "tránsito_bajo") {
           mode = "optimized";
           vus = 10;
-        } else if (presetName === "pico_lento") {
+        } else if (presetName === "pico_lento" || presetName === "hora_punta") {
           mode = "unoptimized";
           vus = 150;
-        } else if (presetName === "pico_optimizado") {
+        } else if (presetName === "pico_optimizado" || presetName === "optimizado_500") {
           mode = "optimized";
           vus = 500;
         } else if (presetName === "estrés_extremo") {
           mode = "optimized";
           vus = 1000;
+        } else if (presetName === "detener") {
+          mode = "unoptimized";
+          vus = 0;
         }
 
-        await fetch("/api/control/set-vus", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ vus: vus }),
-        });
+        await setSliderVUs(vus);
 
         const res = await fetch("/api/control/stats");
         const data = await res.json();
         if (data.mode !== mode) {
-          await fetch("/api/control/toggle", { method: "POST" });
+          await fetch("/api/control/toggle", { 
+            method: "POST",
+            headers: { "x-admin-token": sessionStorage.getItem('pcrw_admin_token') || '' }
+          });
         }
 
         fetchStats();
@@ -580,8 +699,151 @@
         fetchStats();
       }
 
-      setInterval(fetchStats, 1000);
-      fetchStats();
+      let heartbeatInterval = null;
+      const EIGHT_HOURS_MS = 8 * 60 * 60 * 1000;
+
+      function getSavedAdminToken() {
+        const token = localStorage.getItem('pcrw_admin_token') || sessionStorage.getItem('pcrw_admin_token');
+        const loginTimeStr = localStorage.getItem('pcrw_admin_login_time');
+        if (!token) return null;
+
+        if (loginTimeStr) {
+          const loginTime = parseInt(loginTimeStr, 10);
+          if (!isNaN(loginTime) && (Date.now() - loginTime) > EIGHT_HOURS_MS) {
+            clearSavedAdminSession();
+            return null;
+          }
+        }
+        return token;
+      }
+
+      function saveAdminSession(token) {
+        localStorage.setItem('pcrw_admin_token', token);
+        localStorage.setItem('pcrw_admin_login_time', Date.now().toString());
+        sessionStorage.setItem('pcrw_admin_token', token);
+      }
+
+      function clearSavedAdminSession() {
+        const token = localStorage.getItem('pcrw_admin_token') || sessionStorage.getItem('pcrw_admin_token');
+        if (token) {
+          fetch('/api/admin/logout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token })
+          }).catch(() => {});
+        }
+        localStorage.removeItem('pcrw_admin_token');
+        localStorage.removeItem('pcrw_admin_login_time');
+        sessionStorage.removeItem('pcrw_admin_token');
+      }
+
+      async function checkLockState() {
+        const token = getSavedAdminToken();
+        if (!token) {
+          showAdminLockModal();
+          return;
+        }
+
+        try {
+          const res = await fetch('/api/admin/heartbeat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token })
+          });
+          const data = await res.json();
+          if (res.ok && data.success) {
+            hideAdminLockModal();
+            startAdminHeartbeat();
+          } else {
+            clearSavedAdminSession();
+            showAdminLockModal(data.message || 'La sesión de administrador expiró o fue iniciada en otro dispositivo.');
+          }
+        } catch (err) {
+          showAdminLockModal();
+        }
+      }
+
+      function showAdminLockModal(msg) {
+        if (heartbeatInterval) clearInterval(heartbeatInterval);
+        document.getElementById('adminLockModal').classList.remove('hidden');
+        const errEl = document.getElementById('pinErrorMsg');
+        if (msg) {
+          errEl.innerText = '❌ ' + msg;
+          errEl.classList.remove('hidden');
+        } else {
+          errEl.classList.add('hidden');
+        }
+      }
+
+      function hideAdminLockModal() {
+        document.getElementById('adminLockModal').classList.add('hidden');
+        document.getElementById('pinErrorMsg').classList.add('hidden');
+      }
+
+      function startAdminHeartbeat() {
+        if (heartbeatInterval) clearInterval(heartbeatInterval);
+        heartbeatInterval = setInterval(async () => {
+          const token = getSavedAdminToken();
+          if (!token) {
+            showAdminLockModal();
+            return;
+          }
+          try {
+            const res = await fetch('/api/admin/heartbeat', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ token })
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+              clearSavedAdminSession();
+              showAdminLockModal(data.message || 'Sesión finalizada.');
+            }
+          } catch (e) {}
+        }, 3000);
+      }
+
+      async function submitAdminPin(e) {
+        e.preventDefault();
+        const pinInput = document.getElementById('adminPinInput');
+        const pin = pinInput.value.trim();
+        const errEl = document.getElementById('pinErrorMsg');
+        errEl.classList.add('hidden');
+
+        try {
+          const res = await fetch('/api/admin/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pin: pin })
+          });
+          const data = await res.json();
+
+          if (res.ok && data.success) {
+            saveAdminSession(data.token);
+            pinInput.value = '';
+            hideAdminLockModal();
+            startAdminHeartbeat();
+            fetchStats();
+          } else {
+            errEl.innerText = '❌ ' + (data.message || 'PIN incorrecto.');
+            errEl.classList.remove('hidden');
+          }
+        } catch (err) {
+          errEl.innerText = '❌ Error de conexión al servidor.';
+          errEl.classList.remove('hidden');
+        }
+      }
+
+      async function lockAdminConsole() {
+        clearSavedAdminSession();
+        showAdminLockModal('Sesión cerrada correctamente.');
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        checkLockState();
+        setInterval(fetchStats, 1000);
+        fetchStats();
+      });
     </script>
   </body>
 </html>

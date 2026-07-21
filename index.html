@@ -58,8 +58,9 @@
           >
           <a
             href="/admin"
-            class="text-rose-400/80 hover:text-rose-400 font-semibold transition"
-            >Consola Admin</a
+            onclick="return openAdminPasswordModal(event)"
+            class="text-rose-400/80 hover:text-rose-400 font-semibold transition flex items-center gap-1"
+            >🔒 Consola Admin</a
           >
         </nav>
       </div>
@@ -155,7 +156,7 @@
           class="group bg-slate-900/60 border border-slate-800/80 hover:border-purple-500/40 p-6 rounded-3xl text-left transition-all duration-300 transform hover:scale-[1.02] flex flex-col justify-between cursor-pointer"
         >
           <div>
-            <div class="flex items-center space-x-3.5 mb-4">
+            <div class="flex items-center space-x-3.5 mb-3">
               <div
                 class="w-11 h-11 bg-purple-500/10 border border-purple-500/25 rounded-2xl flex items-center justify-center text-purple-400 font-bold group-hover:bg-purple-500/20 transition shrink-0"
               >
@@ -164,12 +165,12 @@
               <h3
                 class="text-lg font-bold text-white group-hover:text-purple-400 transition"
               >
-                Escanea para Entrar
+                Código QR de Acceso
               </h3>
             </div>
             <p class="text-xs text-slate-400 leading-normal mb-4">
               Conéctate a la red LAN por cable o Wi-Fi y escanea este código
-              para simular tu matrícula en tiempo real:
+              para ingresar al inicio de la aplicación:
             </p>
             <div class="flex justify-center my-3">
               <div
@@ -187,7 +188,7 @@
           <span
             id="qrPreviewUrlText"
             class="text-indigo-400 font-bold block mt-4 font-mono text-[10px] group-hover:underline text-center w-full"
-            >${LAN_MATRICULA_URL}</span
+            >${LAN_ROOT_URL}</span
           >
         </div>
       </div>
@@ -226,6 +227,50 @@
       </div>
     </main>
 
+    <!-- Admin Password Modal -->
+    <div
+      id="adminPasswordModal"
+      class="fixed inset-0 bg-slate-950/90 backdrop-blur-xl hidden flex items-center justify-center z-50 p-4 transition-all duration-300"
+    >
+      <div class="bg-slate-900 border border-slate-800 p-8 rounded-3xl max-w-md w-full text-center shadow-2xl relative">
+        <button
+          onclick="closeAdminPasswordModal()"
+          class="absolute top-4 right-4 text-slate-400 hover:text-white transition font-bold text-xl"
+        >
+          &times;
+        </button>
+        <div class="w-14 h-14 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex items-center justify-center text-rose-400 text-2xl font-bold mx-auto mb-4">
+          🔒
+        </div>
+        <span class="text-[10px] bg-rose-500/10 text-rose-400 px-3 py-1 rounded-full font-bold uppercase tracking-wider border border-rose-500/20 inline-block mb-3">
+          Acceso Restringido
+        </span>
+        <h2 class="text-2xl font-black text-white mb-2">Consola de Administración</h2>
+        <p class="text-xs text-slate-400 mb-6 leading-relaxed">
+          Ingrese el PIN de acceso para iniciar la sesión de control exclusiva:
+        </p>
+
+        <form onsubmit="submitIndexAdminPin(event)" class="space-y-4">
+          <input
+            type="password"
+            id="indexAdminPinInput"
+            placeholder="••••"
+            class="w-full bg-slate-950 border border-slate-800 focus:border-rose-500 text-white text-center text-2xl tracking-widest font-mono py-3 px-4 rounded-xl outline-none transition"
+            required
+            maxlength="10"
+          />
+          <p id="indexPinErrorMsg" class="text-xs text-rose-400 font-semibold hidden"></p>
+
+          <button
+            type="submit"
+            class="w-full bg-rose-600 hover:bg-rose-500 text-white font-bold py-3 px-4 rounded-xl text-sm transition shadow-lg shadow-rose-600/20"
+          >
+            Ingresar a la Consola
+          </button>
+        </form>
+      </div>
+    </div>
+
     <!-- Modal for Large QR -->
     <div
       id="qrModal"
@@ -250,14 +295,14 @@
         >
         <h3 class="text-xl font-black text-white mb-1">Código QR Gigante</h3>
         <p class="text-xs text-slate-400 mb-5">
-          Perfecto para escanear desde los asientos traseros del aula
+          Escanea para ingresar a la página principal del Simulador
         </p>
 
         <!-- Giant QR Code -->
         <div class="bg-white p-3 rounded-2xl inline-block shadow-xl mb-5">
           <img
             id="qrLargeImg"
-            src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(LAN_MATRICULA_URL)}"
+            src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(LAN_ROOT_URL)}"
             alt="QR LAN Access Large"
             class="w-72 h-72"
           />
@@ -267,14 +312,14 @@
         <div class="bg-slate-950 p-4 rounded-xl border border-slate-850">
           <span
             class="text-[9px] uppercase font-bold text-slate-500 block tracking-wider mb-1"
-            >Enlace del Portal de Matrícula</span
+            >Enlace del Servidor (Inicio)</span
           >
           <a
             id="qrLargeUrlLink"
-            href="${LAN_MATRICULA_URL}"
+            href="${LAN_ROOT_URL}"
             target="_blank"
             class="text-base font-mono font-bold text-indigo-400 hover:underline block break-all"
-            >${LAN_MATRICULA_URL}</a
+            >${LAN_ROOT_URL}</a
           >
         </div>
       </div>
@@ -288,64 +333,117 @@
     </footer>
 
     <script>
+      const EIGHT_HOURS_MS = 8 * 60 * 60 * 1000;
+
+      function isSavedAdminSessionValid() {
+        const token = localStorage.getItem('pcrw_admin_token') || sessionStorage.getItem('pcrw_admin_token');
+        const loginTimeStr = localStorage.getItem('pcrw_admin_login_time');
+        if (!token) return false;
+        if (loginTimeStr) {
+          const loginTime = parseInt(loginTimeStr, 10);
+          if (!isNaN(loginTime) && (Date.now() - loginTime) > EIGHT_HOURS_MS) {
+            localStorage.removeItem('pcrw_admin_token');
+            localStorage.removeItem('pcrw_admin_login_time');
+            sessionStorage.removeItem('pcrw_admin_token');
+            return false;
+          }
+        }
+        return true;
+      }
+
+      function openAdminPasswordModal(e) {
+        if (e) e.preventDefault();
+        if (isSavedAdminSessionValid()) {
+          window.location.href = '/admin';
+          return false;
+        }
+        document.getElementById('adminPasswordModal').classList.remove('hidden');
+        document.getElementById('indexAdminPinInput').focus();
+        return false;
+      }
+
+      function closeAdminPasswordModal() {
+        document.getElementById('adminPasswordModal').classList.add('hidden');
+        document.getElementById('indexPinErrorMsg').classList.add('hidden');
+      }
+
+      async function submitIndexAdminPin(e) {
+        e.preventDefault();
+        const pin = document.getElementById('indexAdminPinInput').value.trim();
+        const errorEl = document.getElementById('indexPinErrorMsg');
+        errorEl.classList.add('hidden');
+
+        try {
+          const res = await fetch('/api/admin/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pin: pin })
+          });
+          const data = await res.json();
+          if (res.ok && data.success) {
+            localStorage.setItem('pcrw_admin_token', data.token);
+            localStorage.setItem('pcrw_admin_login_time', Date.now().toString());
+            sessionStorage.setItem('pcrw_admin_token', data.token);
+            window.location.href = '/admin';
+          } else {
+            errorEl.innerText = '❌ ' + (data.message || 'PIN Incorrecto.');
+            errorEl.classList.remove('hidden');
+          }
+        } catch (err) {
+          errorEl.innerText = '❌ Error de conexión al verificar PIN.';
+          errorEl.classList.remove('hidden');
+        }
+      }
+
       // Live Server / Local Static File Compatibility Layer
       document.addEventListener("DOMContentLoaded", () => {
         const isStatic =
+          document.body.innerHTML.includes("${LAN_ROOT_URL}") ||
           document.body.innerHTML.includes("${LAN_MATRICULA_URL}") ||
           window.location.port !== "3000";
         if (isStatic) {
-          console.log(
-            "[Live Server Mode] Detectado servidor estático o puerto externo. Aplicando compatibilidad.",
-          );
+          console.log("[Live Server Mode] Detectado servidor estático. Aplicando compatibilidad de URLs.");
           const defaultPort = 3000;
-
-          // Fallback backend URL
           const backendHost =
-            window.location.hostname === "127.0.0.1" ||
-            window.location.hostname === "localhost"
+            window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost"
               ? `http://localhost:${defaultPort}`
               : `http://${window.location.hostname}:${defaultPort}`;
 
-          // Try to fetch true LAN IP and QR details from backend server
           fetch(`${backendHost}/api/control/stats`)
             .then(res => res.json())
             .then(data => {
-              if (data.lanMatriculaUrl && data.qrApiUrl) {
-                console.log("[Live Server Mode] Sincronizadas URLs LAN reales del servidor:", data.lanMatriculaUrl);
-                updateQrDetails(data.lanMatriculaUrl, data.qrApiUrl);
-              } else {
-                useFallbackUrls();
-              }
+              const rootUrl = data.lanRootUrl || data.lanMatriculaUrl || backendHost;
+              const qrUrl = data.qrApiUrl || `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(rootUrl)}`;
+              updateQrDetails(rootUrl, qrUrl);
             })
             .catch(err => {
-              console.warn("[Live Server Mode] Error al conectar con el backend para recuperar IP LAN. Usando fallback localhost.", err);
               useFallbackUrls();
             });
 
           function useFallbackUrls() {
-            const lanMatriculaUrl = `${backendHost}/matricula`;
-            const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(lanMatriculaUrl)}`;
-            updateQrDetails(lanMatriculaUrl, qrApiUrl);
+            const lanRootUrl = backendHost;
+            const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(lanRootUrl)}`;
+            updateQrDetails(lanRootUrl, qrApiUrl);
           }
 
-          function updateQrDetails(lanMatriculaUrl, qrApiUrl) {
+          function updateQrDetails(lanRootUrl, qrApiUrl) {
+            const cleanRoot = lanRootUrl.replace(/\/+$/, '');
             const qrPreviewImg = document.getElementById("qrPreviewImg");
             if (qrPreviewImg) qrPreviewImg.src = qrApiUrl;
 
             const qrPreviewUrlText = document.getElementById("qrPreviewUrlText");
-            if (qrPreviewUrlText) qrPreviewUrlText.innerText = lanMatriculaUrl;
+            if (qrPreviewUrlText) qrPreviewUrlText.innerText = cleanRoot;
 
             const qrLargeImg = document.getElementById("qrLargeImg");
-            if (qrLargeImg) qrLargeImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(lanMatriculaUrl)}`;
+            if (qrLargeImg) qrLargeImg.src = qrApiUrl;
 
             const qrLargeUrlLink = document.getElementById("qrLargeUrlLink");
             if (qrLargeUrlLink) {
-              qrLargeUrlLink.href = lanMatriculaUrl;
-              qrLargeUrlLink.innerText = lanMatriculaUrl;
+              qrLargeUrlLink.href = cleanRoot;
+              qrLargeUrlLink.innerText = cleanRoot;
             }
           }
 
-          // Fix navigation links to point to the backend server (port 3000)
           document.querySelectorAll("a").forEach((link) => {
             const href = link.getAttribute("href");
             if (href && href.startsWith("/") && !link.id) {
