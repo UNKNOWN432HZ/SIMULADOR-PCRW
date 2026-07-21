@@ -265,7 +265,7 @@ function simulateInternalRequest(method, path) {
 // HTTP Server Definition
 const server = http.createServer((req, res) => {
     const parsedUrl = url.parse(req.url, true);
-    const path = parsedUrl.pathname;
+    const reqPath = parsedUrl.pathname;
     
     const studentId = req.headers['x-student-id'] || parsedUrl.query.studentId;
     const studentName = decodeURIComponent(req.headers['x-student-name'] || parsedUrl.query.studentName || '');
@@ -276,32 +276,50 @@ const server = http.createServer((req, res) => {
     }
     
     // --- NON-BUSINESS SYSTEM & MONITORING ROUTES (DO NOT COUNT IN APM LOAD METRICS) ---
-    if (path === '/' && req.method === 'GET') {
+    if (reqPath === '/' && req.method === 'GET') {
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
         return res.end(getHtmlView('index.html'));
     } 
     
-    if (path === '/matricula' && req.method === 'GET') {
+    if (reqPath === '/matricula' && req.method === 'GET') {
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
         return res.end(getHtmlView('matricula.html'));
     }
 
-    if (path === '/dashboard' && req.method === 'GET') {
+    if (reqPath === '/dashboard' && req.method === 'GET') {
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
         return res.end(getHtmlView('dashboard.html'));
     }
 
-    if (path === '/admin' && req.method === 'GET') {
+    if (reqPath === '/admin' && req.method === 'GET') {
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
         return res.end(getHtmlView('admin.html'));
     }
 
-    if (path === '/favicon.ico') {
-        res.writeHead(204);
-        return res.end();
+    // Static assets handling (/css/, /scripts/, /images/, /favicon.ico)
+    if (req.method === 'GET' && (reqPath.startsWith('/css/') || reqPath.startsWith('/scripts/') || reqPath.startsWith('/images/') || reqPath === '/favicon.ico')) {
+        const targetPath = reqPath === '/favicon.ico'
+            ? path.join(__dirname, 'favicon.ico')
+            : path.join(__dirname, reqPath);
+            
+        if (fs.existsSync(targetPath) && fs.statSync(targetPath).isFile()) {
+            const ext = path.extname(targetPath).toLowerCase();
+            const mimeTypes = {
+                '.css': 'text/css',
+                '.js': 'application/javascript',
+                '.png': 'image/png',
+                '.ico': 'image/x-icon',
+                '.jpg': 'image/jpeg',
+                '.jpeg': 'image/jpeg',
+                '.svg': 'image/svg+xml'
+            };
+            const contentType = mimeTypes[ext] || 'application/octet-stream';
+            res.writeHead(200, { 'Content-Type': contentType });
+            return fs.createReadStream(targetPath).pipe(res);
+        }
     }
 
-    if (path === '/api/admin/login' && req.method === 'POST') {
+    if (reqPath === '/api/admin/login' && req.method === 'POST') {
         let body = '';
         req.on('data', chunk => { body += chunk; });
         return req.on('end', () => {
@@ -338,7 +356,7 @@ const server = http.createServer((req, res) => {
         });
     }
 
-    if (path === '/api/admin/heartbeat' && req.method === 'POST') {
+    if (reqPath === '/api/admin/heartbeat' && req.method === 'POST') {
         let body = '';
         req.on('data', chunk => { body += chunk; });
         return req.on('end', () => {
@@ -356,7 +374,7 @@ const server = http.createServer((req, res) => {
         });
     }
 
-    if (path === '/api/admin/logout' && req.method === 'POST') {
+    if (reqPath === '/api/admin/logout' && req.method === 'POST') {
         let body = '';
         req.on('data', chunk => { body += chunk; });
         return req.on('end', () => {
@@ -374,7 +392,7 @@ const server = http.createServer((req, res) => {
         });
     }
 
-    if (path === '/api/control/stats' && req.method === 'GET') {
+    if (reqPath === '/api/control/stats' && req.method === 'GET') {
         const realCount = getActiveRealUsersCount();
         const avg = stats.latencySamples.length > 0 
             ? stats.latencySamples.reduce((a, b) => a + b, 0) / stats.latencySamples.length 
@@ -400,13 +418,13 @@ const server = http.createServer((req, res) => {
         });
     } 
     
-    if (path === '/api/control/toggle' && req.method === 'POST') {
+    if (reqPath === '/api/control/toggle' && req.method === 'POST') {
         globalMode = globalMode === 'unoptimized' ? 'optimized' : 'unoptimized';
         logEvent('system', `Modo del servidor cambiado a: ${globalMode.toUpperCase()}`);
         return sendJson(res, 200, { mode: globalMode });
     } 
     
-    if (path === '/api/control/set-vus' && req.method === 'POST') {
+    if (reqPath === '/api/control/set-vus' && req.method === 'POST') {
         let body = '';
         req.on('data', chunk => { body += chunk; });
         return req.on('end', () => {
@@ -422,7 +440,7 @@ const server = http.createServer((req, res) => {
         });
     }
 
-    if (path === '/api/control/reset' && req.method === 'POST') {
+    if (reqPath === '/api/control/reset' && req.method === 'POST') {
         resetStats();
         logEvent('system', 'Métricas APM del servidor reiniciadas.');
         return sendJson(res, 200, { reset: true });
@@ -459,7 +477,7 @@ const server = http.createServer((req, res) => {
     }
     
     // --- TARGET PORTAL ENDPOINTS ---
-    if (path === '/api/auth/login' && req.method === 'POST') {
+    if (reqPath === '/api/auth/login' && req.method === 'POST') {
         const delay = globalMode === 'unoptimized' ? 200 : 15;
         setTimeout(() => {
             finalizeRequest('success', 200);
@@ -471,7 +489,7 @@ const server = http.createServer((req, res) => {
         }, delay);
     } 
     
-    else if (path === '/api/matricula/cursos' && req.method === 'GET') {
+    else if (reqPath === '/api/matricula/cursos' && req.method === 'GET') {
         if (globalMode === 'unoptimized') {
             const currentVUs = stats.activeRequests;
             if (currentVUs > 45) {
@@ -511,7 +529,7 @@ const server = http.createServer((req, res) => {
         }
     } 
     
-    else if (path === '/api/matricula/guardar' && req.method === 'POST') {
+    else if (reqPath === '/api/matricula/guardar' && req.method === 'POST') {
         if (globalMode === 'unoptimized') {
             const currentVUs = stats.activeRequests;
             if (currentVUs > 45) {

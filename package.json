@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "build:css": "tailwindcss -i ./css/style.css -o ./css/output.css --minify"
   },
   "keywords": [
     "performance-testing",
@@ -17,5 +18,9 @@
   ],
   "author": "SIMULADOR PCRW",
   "license": "MIT",
-  "dependencies": {}
+  "devDependencies": {
+    "autoprefixer": "^10.5.4",
+    "postcss": "^8.5.21",
+    "tailwindcss": "^3.4.19"
+  }
 }

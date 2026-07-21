@@ -1,490 +1,428 @@
 <!doctype html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Monitor de Rendimiento en Vivo - SIMULADOR PCRW</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-      @import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap");
-      body {
-        font-family: "Outfit", sans-serif;
-      }
-      /* Barra de desplazamiento personalizada */
-      ::-webkit-scrollbar {
-        width: 10px;
-      }
-      ::-webkit-scrollbar-track {
-        background: #0f172a;
-      }
-      ::-webkit-scrollbar-thumb {
-        background: linear-gradient(to bottom, #7dd3fc, #38bdf8);
-        border-radius: 10px;
-      }
-      ::-webkit-scrollbar-thumb:hover {
-        background: #0ea5e9;
-      }
-    </style>
-  </head>
-  <body class="bg-slate-950 text-slate-100 min-h-screen">
-    <div class="container mx-auto px-4 py-5">
-      <!-- Header -->
-      <header
-        class="flex flex-col lg:flex-row justify-between items-center border-b border-slate-800 pb-4 mb-6"
-      >
-        <div>
-          <span
-            class="bg-indigo-500/10 text-indigo-400 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider border border-indigo-500/20 inline-block mb-1"
-            >Métricas en Vivo (Público)</span
-          >
-          <h1
-            class="text-3xl font-black bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-500 bg-clip-text text-transparent"
-          >
-            APM Public Performance Monitor
-          </h1>
-          <p class="text-slate-400 text-xs mt-0.5">
-            Observa cómo fluctúan las métricas a medida que tú y tus compañeros
-            envían matrículas.
-          </p>
-        </div>
 
-        <div class="mt-4 lg:mt-0 flex gap-3">
-          <a
-            href="/matricula"
-            class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-xl text-xs font-bold transition flex items-center shadow-lg shadow-blue-500/10"
-          >
-            Ir al Portal de Matrícula
-          </a>
-          <a
-            href="/"
-            class="bg-slate-900 border border-slate-800 hover:border-slate-700 px-4 py-2 rounded-xl text-xs font-bold transition flex items-center"
-          >
-            Inicio
-          </a>
-        </div>
-      </header>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Monitor de Rendimiento en Vivo - SIMULADOR PCRW</title>
+  <link rel="icon" type="image/png" href="/images/favicon.png" />
+  <link rel="shortcut icon" href="/favicon.ico" />
+  <script src="/scripts/chart.min.js"></script>
+  <link rel="stylesheet" href="/css/output.css" />
+</head>
 
-      <!-- Grid Layout -->
-      <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <!-- Left Side: APM Metrics (3 Columns) -->
-        <div class="lg:col-span-3 space-y-6">
-          <!-- Widgets -->
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <!-- Concurrencia -->
-            <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
-              <p
-                class="text-[10px] text-slate-400 uppercase tracking-wider font-bold"
-              >
-                Concurrencia Total
-              </p>
-              <p
-                id="activeReqVal"
-                class="text-3xl font-black text-blue-400 mt-2"
-              >
-                0
-              </p>
-              <p class="text-[9px] text-slate-400 mt-2">
-                <span id="realVUsVal" class="text-yellow-400 font-bold">0</span>
-                reales /
-                <span id="simVUsVal" class="text-sky-400 font-bold">0</span>
-                simulados
-              </p>
-            </div>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+  <div class="container mx-auto px-4 py-5">
+    <!-- Header -->
+    <header class="flex flex-col lg:flex-row justify-between items-center border-b border-slate-800 pb-4 mb-6">
+      <div>
+        <span
+          class="bg-indigo-500/10 text-indigo-400 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider border border-indigo-500/20 inline-block mb-1">Métricas
+          en Vivo (Público)</span>
+        <h1
+          class="text-3xl font-black bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-500 bg-clip-text text-transparent">
+          APM Public Performance Monitor
+        </h1>
+        <p class="text-slate-400 text-xs mt-0.5">
+          Observa cómo fluctúan las métricas a medida que tú y tus compañeros
+          envían matrículas.
+        </p>
+      </div>
 
-            <!-- Latencia Media -->
-            <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
-              <p
-                class="text-[10px] text-slate-400 uppercase tracking-wider font-bold"
-              >
-                Latencia Media
-              </p>
-              <p
-                id="avgLatencyVal"
-                class="text-3xl font-black text-indigo-400 mt-2"
-              >
-                0 ms
-              </p>
-              <span
-                id="avgLatencySub"
-                class="text-[9px] block mt-2 font-semibold"
-                >Cargando...</span
-              >
-            </div>
+      <div class="mt-4 lg:mt-0 flex gap-3">
+        <a href="/matricula"
+          class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-xl text-xs font-bold transition flex items-center shadow-lg shadow-blue-500/10">
+          Ir al Portal de Matrícula
+        </a>
+        <a href="/"
+          class="bg-slate-900 border border-slate-800 hover:border-slate-700 px-4 py-2 rounded-xl text-xs font-bold transition flex items-center">
+          Inicio
+        </a>
+      </div>
+    </header>
 
-            <!-- Throughput -->
-            <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
-              <p
-                class="text-[10px] text-slate-400 uppercase tracking-wider font-bold"
-              >
-                Rendimiento (RPS)
-              </p>
-              <p id="rpsVal" class="text-3xl font-black text-emerald-400 mt-2">
-                0.0
-              </p>
-              <p id="totalReqVal" class="text-[9px] text-slate-400 mt-2">
-                Total: 0
-              </p>
-            </div>
-
-            <!-- Tasa de Error -->
-            <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
-              <p
-                class="text-[10px] text-slate-400 uppercase tracking-wider font-bold"
-              >
-                Tasa de Error
-              </p>
-              <p
-                id="errorRateVal"
-                class="text-3xl font-black text-rose-500 mt-2"
-              >
-                0.0 %
-              </p>
-              <p id="statusRate" class="text-[9px] text-rose-400 mt-2">
-                Errores: 0
-              </p>
-            </div>
-          </div>
-
-          <!-- Live Chart -->
+    <!-- Grid Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <!-- Left Side: APM Metrics (3 Columns) -->
+      <div class="lg:col-span-3 space-y-6">
+        <!-- Widgets -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <!-- Concurrencia -->
           <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
-            <h3
-              class="text-xs font-bold text-slate-200 mb-3 uppercase tracking-wider"
-            >
-              Historial Latencia vs Concurrencia
-            </h3>
-            <div class="h-80">
-              <canvas id="liveChart"></canvas>
-            </div>
+            <p class="text-[10px] text-slate-400 uppercase tracking-wider font-bold">
+              Concurrencia Total
+            </p>
+            <p id="activeReqVal" class="text-3xl font-black text-blue-400 mt-2">
+              0
+            </p>
+            <p class="text-[9px] text-slate-400 mt-2">
+              <span id="realVUsVal" class="text-yellow-400 font-bold">0</span>
+              reales /
+              <span id="simVUsVal" class="text-sky-400 font-bold">0</span>
+              simulados
+            </p>
           </div>
 
-          <!-- Event Log -->
+          <!-- Latencia Media -->
           <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
-            <h3
-              class="text-xs font-bold text-slate-200 mb-3 uppercase tracking-wider"
-            >
-              Eventos de Servidor Recientes
-            </h3>
-            <div
-              id="eventLogContainer"
-              class="h-36 overflow-y-auto space-y-1.5 text-xs font-mono bg-slate-950 p-4 rounded-xl border border-slate-800"
-            ></div>
+            <p class="text-[10px] text-slate-400 uppercase tracking-wider font-bold">
+              Latencia Media
+            </p>
+            <p id="avgLatencyVal" class="text-3xl font-black text-indigo-400 mt-2">
+              0 ms
+            </p>
+            <span id="avgLatencySub" class="text-[9px] block mt-2 font-semibold">Cargando...</span>
+          </div>
+
+          <!-- Throughput -->
+          <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+            <p class="text-[10px] text-slate-400 uppercase tracking-wider font-bold">
+              Rendimiento (RPS)
+            </p>
+            <p id="rpsVal" class="text-3xl font-black text-emerald-400 mt-2">
+              0.0
+            </p>
+            <p id="totalReqVal" class="text-[9px] text-slate-400 mt-2">
+              Total: 0
+            </p>
+          </div>
+
+          <!-- Tasa de Error -->
+          <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+            <p class="text-[10px] text-slate-400 uppercase tracking-wider font-bold">
+              Tasa de Error
+            </p>
+            <p id="errorRateVal" class="text-3xl font-black text-rose-500 mt-2">
+              0.0 %
+            </p>
+            <p id="statusRate" class="text-[9px] text-rose-400 mt-2">
+              Errores: 0
+            </p>
           </div>
         </div>
 
-        <!-- Right Side: Explanation -->
-        <div class="space-y-6">
-          <!-- Server Architecture info -->
-          <div
-            class="bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-3 text-xs leading-relaxed"
-          >
-            <h3
-              class="text-xs font-bold text-slate-200 uppercase tracking-wider border-b border-slate-800 pb-2"
-            >
-              Estado del Servidor
-            </h3>
-
-            <div class="flex justify-between items-center">
-              <span class="text-slate-400 font-semibold">Caché Redis:</span>
-              <span id="optCacheStatus" class="font-bold text-slate-500"
-                >Cargando...</span
-              >
-            </div>
-            <div class="flex justify-between items-center">
-              <span class="text-slate-400 font-semibold">Índices MySQL:</span>
-              <span id="optDbStatus" class="font-bold text-slate-500"
-                >Cargando...</span
-              >
-            </div>
-            <div class="flex justify-between items-center">
-              <span class="text-slate-400 font-semibold">Límite PHP-FPM:</span>
-              <span id="optFpmStatus" class="font-bold text-slate-500"
-                >Cargando...</span
-              >
-            </div>
+        <!-- Live Chart -->
+        <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+          <h3 class="text-xs font-bold text-slate-200 mb-3 uppercase tracking-wider">
+            Historial Latencia vs Concurrencia
+          </h3>
+          <div class="h-80">
+            <canvas id="liveChart"></canvas>
           </div>
+        </div>
 
-          <!-- Hardware Profile Card -->
-          <div
-            class="bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-3.5 text-xs animate-fade-in"
-          >
-            <h3
-              class="text-xs font-bold text-slate-200 uppercase tracking-wider border-b border-slate-800 pb-2 flex items-center gap-1.5"
-            >
-              🖥️ Recursos de Hardware Simulados
-            </h3>
-            <div class="space-y-2.5">
-              <div class="flex justify-between border-b border-slate-800/40 pb-1">
-                <span class="text-slate-400">Servidor (VPS):</span>
-                <span class="text-slate-200 font-semibold font-mono">1 vCPU / 2GB RAM</span>
-              </div>
-              <div class="flex justify-between border-b border-slate-800/40 pb-1">
-                <span class="text-slate-400">Sistema Operativo:</span>
-                <span class="text-slate-200 font-semibold">Ubuntu 22.04 LTS</span>
-              </div>
-              <div class="flex justify-between border-b border-slate-800/40 pb-1">
-                <span class="text-slate-400">Servidor Web:</span>
-                <span class="text-slate-200 font-semibold font-mono">Nginx 1.22</span>
-              </div>
-              <div class="flex justify-between border-b border-slate-800/40 pb-1">
-                <span class="text-slate-400">Backend Engine:</span>
-                <span class="text-slate-200 font-semibold font-mono">PHP-FPM 8.1</span>
-              </div>
-              <div class="flex justify-between border-b border-slate-800/40 pb-1">
-                <span class="text-slate-400">Base de Datos:</span>
-                <span class="text-slate-200 font-semibold font-mono">MySQL 8.0</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-slate-400">Capa de Memoria:</span>
-                <span class="text-slate-200 font-semibold font-mono">Redis Cache 7.0</span>
-              </div>
+        <!-- Event Log -->
+        <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+          <h3 class="text-xs font-bold text-slate-200 mb-3 uppercase tracking-wider">
+            Eventos de Servidor Recientes
+          </h3>
+          <div id="eventLogContainer"
+            class="h-36 overflow-y-auto space-y-1.5 text-xs font-mono bg-slate-950 p-4 rounded-xl border border-slate-800">
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Side: Explanation -->
+      <div class="space-y-6">
+        <!-- Server Architecture info -->
+        <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-3 text-xs leading-relaxed">
+          <h3 class="text-xs font-bold text-slate-200 uppercase tracking-wider border-b border-slate-800 pb-2">
+            Estado del Servidor
+          </h3>
+
+          <div class="flex justify-between items-center">
+            <span class="text-slate-400 font-semibold">Caché Redis:</span>
+            <span id="optCacheStatus" class="font-bold text-slate-500">Cargando...</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-slate-400 font-semibold">Índices MySQL:</span>
+            <span id="optDbStatus" class="font-bold text-slate-500">Cargando...</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-slate-400 font-semibold">Límite PHP-FPM:</span>
+            <span id="optFpmStatus" class="font-bold text-slate-500">Cargando...</span>
+          </div>
+        </div>
+
+        <!-- Hardware Profile Card -->
+        <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-3.5 text-xs animate-fade-in">
+          <h3
+            class="text-xs font-bold text-slate-200 uppercase tracking-wider border-b border-slate-800 pb-2 flex items-center gap-1.5">
+            🖥️ Recursos de Hardware Simulados
+          </h3>
+          <div class="space-y-2.5">
+            <div class="flex justify-between border-b border-slate-800/40 pb-1">
+              <span class="text-slate-400">Servidor (VPS):</span>
+              <span class="text-slate-200 font-semibold font-mono">1 vCPU / 2GB RAM</span>
+            </div>
+            <div class="flex justify-between border-b border-slate-800/40 pb-1">
+              <span class="text-slate-400">Sistema Operativo:</span>
+              <span class="text-slate-200 font-semibold">Ubuntu 22.04 LTS</span>
+            </div>
+            <div class="flex justify-between border-b border-slate-800/40 pb-1">
+              <span class="text-slate-400">Servidor Web:</span>
+              <span class="text-slate-200 font-semibold font-mono">Nginx 1.22</span>
+            </div>
+            <div class="flex justify-between border-b border-slate-800/40 pb-1">
+              <span class="text-slate-400">Backend Engine:</span>
+              <span class="text-slate-200 font-semibold font-mono">PHP-FPM 8.1</span>
+            </div>
+            <div class="flex justify-between border-b border-slate-800/40 pb-1">
+              <span class="text-slate-400">Base de Datos:</span>
+              <span class="text-slate-200 font-semibold font-mono">MySQL 8.0</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-400">Capa de Memoria:</span>
+              <span class="text-slate-200 font-semibold font-mono">Redis Cache 7.0</span>
             </div>
           </div>
         </div>
       </div>
     </div>
+  </div>
 
-    <script>
-      // Init chart
-      const ctx = document.getElementById("liveChart").getContext("2d");
-      const liveChart = new Chart(ctx, {
-        type: "line",
-        data: {
-          labels: [],
-          datasets: [
-            {
-              label: "Latencia (ms)",
-              data: [],
-              borderColor: "#818cf8",
-              backgroundColor: "rgba(129, 140, 248, 0.05)",
-              borderWidth: 2,
-              tension: 0.3,
-              spanGaps: true,
-              pointRadius: 2,
-              pointHoverRadius: 4,
-              yAxisID: "y1",
-            },
-            {
-              label: "Usuarios Concurrencia (VUs)",
-              data: [],
-              borderColor: "#38bdf8",
-              backgroundColor: "transparent",
-              borderWidth: 2,
-              tension: 0.1,
-              spanGaps: true,
-              pointRadius: 2,
-              pointHoverRadius: 4,
-              yAxisID: "y2",
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          animation: false,
-          scales: {
-            x: {
-              grid: { display: false },
-              ticks: {
-                color: "#64748b",
-                font: { size: 9 },
-                maxRotation: 0,
-                minRotation: 0,
-                autoSkip: true,
-                maxTicksLimit: 7,
-              },
-            },
-            y1: {
-              position: "left",
-              beginAtZero: true,
-              suggestedMin: 0,
-              grid: { color: "rgba(71, 85, 105, 0.15)" },
-              ticks: {
-                color: "#818cf8",
-                font: { size: 9 },
-                callback: (val) => Math.round(val) + " ms",
-              },
-              title: {
-                display: true,
-                text: "Latencia (ms)",
-                color: "#818cf8",
-                font: { size: 9 },
-              },
-            },
-            y2: {
-              position: "right",
-              beginAtZero: true,
-              suggestedMin: 0,
-              suggestedMax: 10,
-              grid: { display: false },
-              ticks: {
-                color: "#38bdf8",
-                font: { size: 9 },
-                precision: 0,
-                stepSize: 1,
-              },
-              title: {
-                display: true,
-                text: "Usuarios Concurrencia",
-                color: "#38bdf8",
-                font: { size: 9 },
-              },
+  <script>
+    // Init chart
+    const ctx = document.getElementById("liveChart").getContext("2d");
+    const liveChart = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: [],
+        datasets: [
+          {
+            label: "Latencia (ms)",
+            data: [],
+            borderColor: "#818cf8",
+            backgroundColor: "rgba(129, 140, 248, 0.05)",
+            borderWidth: 2,
+            tension: 0.3,
+            spanGaps: true,
+            pointRadius: 2,
+            pointHoverRadius: 4,
+            yAxisID: "y1",
+          },
+          {
+            label: "Usuarios Concurrencia (VUs)",
+            data: [],
+            borderColor: "#38bdf8",
+            backgroundColor: "transparent",
+            borderWidth: 2,
+            tension: 0.1,
+            spanGaps: true,
+            pointRadius: 2,
+            pointHoverRadius: 4,
+            yAxisID: "y2",
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: false,
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: {
+              color: "#64748b",
+              font: { size: 9 },
+              maxRotation: 0,
+              minRotation: 0,
+              autoSkip: true,
+              maxTicksLimit: 7,
             },
           },
-          plugins: {
-            legend: { labels: { color: "#cbd5e1", font: { size: 10 } } },
+          y1: {
+            position: "left",
+            beginAtZero: true,
+            suggestedMin: 0,
+            grid: { color: "rgba(71, 85, 105, 0.15)" },
+            ticks: {
+              color: "#818cf8",
+              font: { size: 9 },
+              callback: (val) => Math.round(val) + " ms",
+            },
+            title: {
+              display: true,
+              text: "Latencia (ms)",
+              color: "#818cf8",
+              font: { size: 9 },
+            },
+          },
+          y2: {
+            position: "right",
+            beginAtZero: true,
+            suggestedMin: 0,
+            suggestedMax: 10,
+            grid: { display: false },
+            ticks: {
+              color: "#38bdf8",
+              font: { size: 9 },
+              precision: 0,
+              stepSize: 1,
+            },
+            title: {
+              display: true,
+              text: "Usuarios Concurrencia",
+              color: "#38bdf8",
+              font: { size: 9 },
+            },
           },
         },
-      });
+        plugins: {
+          legend: { labels: { color: "#cbd5e1", font: { size: 10 } } },
+        },
+      },
+    });
 
-      let lastReqCount = 0;
-      let lastTime = Date.now();
+    let lastReqCount = 0;
+    let lastTime = Date.now();
 
-      async function fetchStats() {
-        try {
-          const res = await fetch("/api/control/stats");
-          const data = await res.json();
+    async function fetchStats() {
+      try {
+        const res = await fetch("/api/control/stats");
+        const data = await res.json();
 
-          const now = Date.now();
-          const deltaReq = data.totalRequests - lastReqCount;
-          const deltaTimeSec = (now - lastTime) / 1000;
-          let currentRps = deltaReq / deltaTimeSec;
-          if (currentRps < 0) currentRps = 0;
+        const now = Date.now();
+        const deltaReq = data.totalRequests - lastReqCount;
+        const deltaTimeSec = (now - lastTime) / 1000;
+        let currentRps = deltaReq / deltaTimeSec;
+        if (currentRps < 0) currentRps = 0;
 
-          lastReqCount = data.totalRequests;
-          lastTime = now;
+        lastReqCount = data.totalRequests;
+        lastTime = now;
 
-          const totalConcurrency = (data.totalConcurrency !== undefined) 
-            ? data.totalConcurrency 
-            : (data.realUsersCount + data.simulatedVUs);
+        const totalConcurrency = (data.totalConcurrency !== undefined)
+          ? data.totalConcurrency
+          : (data.realUsersCount + data.simulatedVUs);
 
-          document.getElementById("activeReqVal").innerText = totalConcurrency;
-          document.getElementById("avgLatencyVal").innerText =
-            data.avgLatency.toFixed(0) + " ms";
-          document.getElementById("totalReqVal").innerText =
-            "Total: " + data.totalRequests;
-          document.getElementById("errorRateVal").innerText =
-            (data.errorRate * 100).toFixed(1) + " %";
-          document.getElementById("statusRate").innerText =
-            "Errores: " + data.failedRequests;
-          document.getElementById("rpsVal").innerText = currentRps.toFixed(1);
+        document.getElementById("activeReqVal").innerText = totalConcurrency;
+        document.getElementById("avgLatencyVal").innerText =
+          data.avgLatency.toFixed(0) + " ms";
+        document.getElementById("totalReqVal").innerText =
+          "Total: " + data.totalRequests;
+        document.getElementById("errorRateVal").innerText =
+          (data.errorRate * 100).toFixed(1) + " %";
+        document.getElementById("statusRate").innerText =
+          "Errores: " + data.failedRequests;
+        document.getElementById("rpsVal").innerText = currentRps.toFixed(1);
 
-          document.getElementById("simVUsVal").innerText = data.simulatedVUs;
-          document.getElementById("realVUsVal").innerText = data.realUsersCount;
+        document.getElementById("simVUsVal").innerText = data.simulatedVUs;
+        document.getElementById("realVUsVal").innerText = data.realUsersCount;
 
-          if (data.mode === "optimized") {
-            document.getElementById("avgLatencySub").innerText =
-              "Redis Cache HIT";
-            document.getElementById("avgLatencySub").className =
-              "text-[9px] text-emerald-400 mt-2 font-semibold";
+        if (data.mode === "optimized") {
+          document.getElementById("avgLatencySub").innerText =
+            "Redis Cache HIT";
+          document.getElementById("avgLatencySub").className =
+            "text-[9px] text-emerald-400 mt-2 font-semibold";
 
-            document.getElementById("optCacheStatus").innerText =
-              "ACTIVO (Redis)";
-            document.getElementById("optCacheStatus").className =
-              "font-bold text-emerald-400";
-            document.getElementById("optDbStatus").innerText = "INDEXADA";
-            document.getElementById("optDbStatus").className =
-              "font-bold text-emerald-400";
-            document.getElementById("optFpmStatus").innerText =
-              "pm.max_children = 60";
-            document.getElementById("optFpmStatus").className =
-              "font-bold text-emerald-400";
-          } else {
-            document.getElementById("avgLatencySub").innerText =
-              "Table Scan en MySQL";
-            document.getElementById("avgLatencySub").className =
-              "text-[9px] text-rose-400 mt-2 font-semibold animate-pulse";
+          document.getElementById("optCacheStatus").innerText =
+            "ACTIVO (Redis)";
+          document.getElementById("optCacheStatus").className =
+            "font-bold text-emerald-400";
+          document.getElementById("optDbStatus").innerText = "INDEXADA";
+          document.getElementById("optDbStatus").className =
+            "font-bold text-emerald-400";
+          document.getElementById("optFpmStatus").innerText =
+            "pm.max_children = 60";
+          document.getElementById("optFpmStatus").className =
+            "font-bold text-emerald-400";
+        } else {
+          document.getElementById("avgLatencySub").innerText =
+            "Table Scan en MySQL";
+          document.getElementById("avgLatencySub").className =
+            "text-[9px] text-rose-400 mt-2 font-semibold animate-pulse";
 
-            document.getElementById("optCacheStatus").innerText =
-              "INACTIVO (Cache Miss)";
-            document.getElementById("optCacheStatus").className =
-              "font-bold text-rose-500";
-            document.getElementById("optDbStatus").innerText =
-              "SIN ÍNDICES (Slow)";
-            document.getElementById("optDbStatus").className =
-              "font-bold text-rose-500";
-            document.getElementById("optFpmStatus").innerText =
-              "pm.max_children = 20";
-            document.getElementById("optFpmStatus").className =
-              "font-bold text-rose-500";
-          }
-
-          // Dynamic Chart Y-Axis Scales (Adjust max and grouping steps dynamically)
-          const maxConc = Math.max(totalConcurrency, data.simulatedVUs || 0);
-          let y2Max = 10;
-          let y2Step = 2;
-          if (maxConc > 500) { y2Max = 1000; y2Step = 200; }
-          else if (maxConc > 200) { y2Max = 500; y2Step = 100; }
-          else if (maxConc > 50) { y2Max = 200; y2Step = 50; }
-          else if (maxConc > 10) { y2Max = 50; y2Step = 10; }
-          else { y2Max = 10; y2Step = 2; }
-
-          liveChart.options.scales.y2.suggestedMax = y2Max;
-          liveChart.options.scales.y2.ticks.stepSize = y2Step;
-
-          const latVal = Math.max(0, Math.round(Number(data.avgLatency) || 0));
-          const concVal = Math.max(0, Math.round(Number(totalConcurrency) || 0));
-
-          let y1Max = 100;
-          if (latVal > 5000) { y1Max = 15000; }
-          else if (latVal > 1000) { y1Max = 5000; }
-          else if (latVal > 100) { y1Max = 1000; }
-          else { y1Max = 100; }
-          liveChart.options.scales.y1.suggestedMax = y1Max;
-
-          // Update charts
-          const d = new Date();
-          const timeLabel = [
-            String(d.getHours()).padStart(2, '0'),
-            String(d.getMinutes()).padStart(2, '0'),
-            String(d.getSeconds()).padStart(2, '0')
-          ].join(':');
-
-          liveChart.data.labels.push(timeLabel);
-          liveChart.data.datasets[0].data.push(latVal);
-          liveChart.data.datasets[1].data.push(concVal);
-
-          if (liveChart.data.labels.length > 25) {
-            liveChart.data.labels.shift();
-            liveChart.data.datasets[0].data.shift();
-            liveChart.data.datasets[1].data.shift();
-          }
-          liveChart.update("none");
-
-          // Update event log
-          const logContainer = document.getElementById("eventLogContainer");
-          logContainer.innerHTML = "";
-          data.eventLog.forEach((log) => {
-            let colorClass = "text-slate-400";
-            let prefix = "[Sim]";
-            if (log.type === "real_success") {
-              colorClass =
-                "text-yellow-300 font-bold bg-yellow-900/10 py-0.5 px-1 rounded border border-yellow-900/20";
-              prefix = "[REAL]";
-            } else if (log.type === "real_error") {
-              colorClass =
-                "text-rose-400 font-extrabold bg-rose-950/20 py-0.5 px-1 rounded border border-rose-900/30";
-              prefix = "[REAL ER]";
-            } else if (log.type === "sim_error") {
-              colorClass = "text-rose-500/60";
-              prefix = "[Sim ER]";
-            } else if (log.type === "system") {
-              colorClass = "text-sky-400 font-bold";
-              prefix = "[SYS]";
-            }
-
-            const div = document.createElement("div");
-            div.className = colorClass;
-            div.innerText = log.time + " " + prefix + " " + log.message;
-            logContainer.appendChild(div);
-          });
-        } catch (err) {
-          console.error("Error fetching stats:", err);
+          document.getElementById("optCacheStatus").innerText =
+            "INACTIVO (Cache Miss)";
+          document.getElementById("optCacheStatus").className =
+            "font-bold text-rose-500";
+          document.getElementById("optDbStatus").innerText =
+            "SIN ÍNDICES (Slow)";
+          document.getElementById("optDbStatus").className =
+            "font-bold text-rose-500";
+          document.getElementById("optFpmStatus").innerText =
+            "pm.max_children = 20";
+          document.getElementById("optFpmStatus").className =
+            "font-bold text-rose-500";
         }
-      }
 
-      setInterval(fetchStats, 1000);
-      fetchStats();
-    </script>
-  </body>
+        // Dynamic Chart Y-Axis Scales (Adjust max and grouping steps dynamically)
+        const maxConc = Math.max(totalConcurrency, data.simulatedVUs || 0);
+        let y2Max = 10;
+        let y2Step = 2;
+        if (maxConc > 500) { y2Max = 1000; y2Step = 200; }
+        else if (maxConc > 200) { y2Max = 500; y2Step = 100; }
+        else if (maxConc > 50) { y2Max = 200; y2Step = 50; }
+        else if (maxConc > 10) { y2Max = 50; y2Step = 10; }
+        else { y2Max = 10; y2Step = 2; }
+
+        liveChart.options.scales.y2.suggestedMax = y2Max;
+        liveChart.options.scales.y2.ticks.stepSize = y2Step;
+
+        const latVal = Math.max(0, Math.round(Number(data.avgLatency) || 0));
+        const concVal = Math.max(0, Math.round(Number(totalConcurrency) || 0));
+
+        let y1Max = 100;
+        if (latVal > 5000) { y1Max = 15000; }
+        else if (latVal > 1000) { y1Max = 5000; }
+        else if (latVal > 100) { y1Max = 1000; }
+        else { y1Max = 100; }
+        liveChart.options.scales.y1.suggestedMax = y1Max;
+
+        // Update charts
+        const d = new Date();
+        const timeLabel = [
+          String(d.getHours()).padStart(2, '0'),
+          String(d.getMinutes()).padStart(2, '0'),
+          String(d.getSeconds()).padStart(2, '0')
+        ].join(':');
+
+        liveChart.data.labels.push(timeLabel);
+        liveChart.data.datasets[0].data.push(latVal);
+        liveChart.data.datasets[1].data.push(concVal);
+
+        if (liveChart.data.labels.length > 25) {
+          liveChart.data.labels.shift();
+          liveChart.data.datasets[0].data.shift();
+          liveChart.data.datasets[1].data.shift();
+        }
+        liveChart.update("none");
+
+        // Update event log
+        const logContainer = document.getElementById("eventLogContainer");
+        logContainer.innerHTML = "";
+        data.eventLog.forEach((log) => {
+          let colorClass = "text-slate-400";
+          let prefix = "[Sim]";
+          if (log.type === "real_success") {
+            colorClass =
+              "text-yellow-300 font-bold bg-yellow-900/10 py-0.5 px-1 rounded border border-yellow-900/20";
+            prefix = "[REAL]";
+          } else if (log.type === "real_error") {
+            colorClass =
+              "text-rose-400 font-extrabold bg-rose-950/20 py-0.5 px-1 rounded border border-rose-900/30";
+            prefix = "[REAL ER]";
+          } else if (log.type === "sim_error") {
+            colorClass = "text-rose-500/60";
+            prefix = "[Sim ER]";
+          } else if (log.type === "system") {
+            colorClass = "text-sky-400 font-bold";
+            prefix = "[SYS]";
+          }
+
+          const div = document.createElement("div");
+          div.className = colorClass;
+          div.innerText = log.time + " " + prefix + " " + log.message;
+          logContainer.appendChild(div);
+        });
+      } catch (err) {
+        console.error("Error fetching stats:", err);
+      }
+    }
+
+    setInterval(fetchStats, 1000);
+    fetchStats();
+  </script>
+</body>
+
 </html>
