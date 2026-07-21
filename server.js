@@ -266,6 +266,7 @@ function simulateInternalRequest(method, path) {
 const server = http.createServer((req, res) => {
     const parsedUrl = url.parse(req.url, true);
     const reqPath = parsedUrl.pathname;
+    console.log(`[REQ ${req.method}] ${reqPath}`);
     
     const studentId = req.headers['x-student-id'] || parsedUrl.query.studentId;
     const studentName = decodeURIComponent(req.headers['x-student-name'] || parsedUrl.query.studentName || '');
@@ -316,6 +317,9 @@ const server = http.createServer((req, res) => {
             const contentType = mimeTypes[ext] || 'application/octet-stream';
             res.writeHead(200, { 'Content-Type': contentType });
             return fs.createReadStream(targetPath).pipe(res);
+        } else {
+            res.writeHead(404, { 'Content-Type': 'text/plain' });
+            return res.end("Static File Not Found");
         }
     }
 
@@ -447,6 +451,16 @@ const server = http.createServer((req, res) => {
     }
     
     // --- BUSINESS MATRICULA API ENDPOINTS (TRACKED IN APM METRICS) ---
+    const isBusinessEndpoint = (reqPath === '/api/auth/login' && req.method === 'POST') ||
+                               (reqPath === '/api/matricula/cursos' && req.method === 'GET') ||
+                               (reqPath === '/api/matricula/guardar' && req.method === 'POST');
+
+    if (!isBusinessEndpoint) {
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        return res.end("API Endpoint Not Found");
+    }
+
+    console.log(`[APM BIZ REQ] ${req.method} ${reqPath}`);
     stats.totalRequests++;
     stats.activeRequests++;
 
@@ -454,6 +468,7 @@ const server = http.createServer((req, res) => {
 
     function finalizeRequest(status, statusCode) {
         const duration = Date.now() - startTime;
+        console.log(`[FINALIZE] ${reqPath} status=${status} code=${statusCode} duration=${duration}ms total=${stats.totalRequests} failed=${stats.failedRequests + (status !== 'success' ? 1 : 0)}`);
         stats.activeRequests = Math.max(0, stats.activeRequests - 1);
         stats.totalLatency += duration;
         stats.latencySamples.push(duration);
